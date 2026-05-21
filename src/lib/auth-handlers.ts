@@ -29,12 +29,35 @@ export async function handleLogin(request: Request): Promise<Response> {
   const callbackURL = `https://${domain}/api/callback`;
   try {
     const config = await getOidcConfig();
+
+    // Generate PKCE code verifier and challenge
+    const codeVerifier = oidc.randomPKCECodeVerifier();
+    const codeChallenge = await oidc.calculatePKCECodeChallenge(codeVerifier);
+
     const redirectUrl = oidc.buildAuthorizationUrl(config, {
       redirect_uri: callbackURL,
       scope: 'openid email profile offline_access',
       prompt: 'login consent',
+      code_challenge: codeChallenge,
+      code_challenge_method: 'S256',
     });
-    return new Response(null, { status: 302, headers: { Location: redirectUrl.href } });
+
+    // Store the code verifier in a short-lived cookie for the callback
+    const verifierCookie = [
+      `pkce_verifier=${encodeURIComponent(codeVerifier)}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax',
+      'Max-Age=600',
+    ].join('; ');
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: redirectUrl.href,
+        'Set-Cookie': verifierCookie,
+      },
+    });
   } catch (e) {
     console.error('[auth/login] error:', e);
     return new Response(null, { status: 302, headers: { Location: '/login?error=config_failed' } });
@@ -45,9 +68,17 @@ export async function handleCallback(request: Request): Promise<Response> {
   const domain = new URL(request.url).hostname;
   const callbackURL = `https://${domain}/api/callback`;
   try {
+    const cookieHeader = request.headers.get('cookie') ?? '';
+    const codeVerifier = parseCookie(cookieHeader, 'pkce_verifier');
+    if (!codeVerifier) {
+      console.error('[auth/callback] missing PKCE verifier cookie');
+      throw new Error('Missing PKCE verifier');
+    }
+
     const config = await getOidcConfig();
     const tokens = await oidc.authorizationCodeGrant(config, new URL(request.url), {
       redirect_uri: callbackURL,
+      pkceCodeVerifier: codeVerifier,
     } as any);
     const claims = tokens.claims();
     if (!claims?.sub) throw new Error('No sub in claims');
@@ -73,7 +104,7 @@ export async function handleCallback(request: Request): Promise<Response> {
     await saveSession(sessionId, userId, { email, firstName, lastName, profileImageUrl });
 
     const isSecure = !domain.includes('localhost');
-    const cookieFlags = [
+    const sessionCookie = [
       `replit_session=${encodeURIComponent(sessionId)}`,
       'Path=/',
       'HttpOnly',
@@ -82,9 +113,14 @@ export async function handleCallback(request: Request): Promise<Response> {
       ...(isSecure ? ['Secure'] : []),
     ].join('; ');
 
+    // Clear the PKCE verifier cookie and set the session cookie
     return new Response(null, {
       status: 302,
-      headers: { Location: '/admin', 'Set-Cookie': cookieFlags },
+      headers: new Headers([
+        ['Location', '/admin'],
+        ['Set-Cookie', sessionCookie],
+        ['Set-Cookie', 'pkce_verifier=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'],
+      ]),
     });
   } catch (e) {
     console.error('[auth/callback] error:', e);
