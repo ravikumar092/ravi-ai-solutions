@@ -2,6 +2,7 @@ modules = ["nodejs-20", "web"]
 [agent]
 expertMode = true
 stack = "BEST_EFFORT_FALLBACK"
+integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:2.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -9,12 +10,13 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-VITE_SUPABASE_URL = "https://kebcvsamtudldsztgivh.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlYmN2c2FtdHVkbGRzenRnaXZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NDI0OTUsImV4cCI6MjA5NDQxODQ5NX0.PH8it1awkt7_SBCKgIu6QCApoyo9U_9E-AtePZ5oGdc"
-SUPABASE_URL = "https://kebcvsamtudldsztgivh.supabase.co"
-VITE_SUPABASE_PROJECT_ID = "kebcvsamtudldsztgivh"
+VITE_SUPABASE_URL = "https://axbwohgimjosyasweadf.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4YndvaGdpbWpvc3lhc3dlYWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNzU0MzMsImV4cCI6MjA5NDg1MTQzM30.GmIbK2xDYjTv7SeTukvAzGC_5KQR2OWlYdj1BbleXfk"
+SUPABASE_URL = "https://axbwohgimjosyasweadf.supabase.co"
+VITE_SUPABASE_PROJECT_ID = "axbwohgimjosyasweadf"
 POSTGRES_URL = "postgresql://postgres:HXFv2MCe9Ao6bBxq@db.kebcvsamtudldsztgivh.supabase.co:5432/postgres"
 RESEND_API_KEY = "re_7H9uP2vV_KP98jiFRYrYAWmbsPJr6hjEN"
+SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4YndvaGdpbWpvc3lhc3dlYWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNzU0MzMsImV4cCI6MjA5NDg1MTQzM30.GmIbK2xDYjTv7SeTukvAzGC_5KQR2OWlYdj1BbleXfk"
 
 [workflows]
 runButton = "Project"
@@ -32,13 +34,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bun run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx vite dev"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
