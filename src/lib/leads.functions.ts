@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendEmail, newLeadEmailHtml } from "@/lib/email.server";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { sendEmail, newLeadEmailHtml } from "./email-utils";
 
 const leadInput = z.object({
   first_name: z.string().trim().min(1).max(80),
@@ -15,14 +15,6 @@ const leadInput = z.object({
   needs: z.string().max(2000).optional().or(z.literal("")),
   best_time: z.string().max(200).optional().or(z.literal("")),
 });
-
-async function assertAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("user_roles").select("role")
-    .eq("user_id", userId).eq("role", "admin").maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin role required");
-}
 
 export const submitLead = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => leadInput.parse(d))
@@ -37,7 +29,6 @@ export const submitLead = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     console.log(`[lead] new submission from ${data.email}`);
 
-    // Email notification if configured
     try {
       const { data: settings } = await supabaseAdmin
         .from("site_settings").select("key,value").in("key", ["notification_email", "notification_enabled"]);
@@ -74,8 +65,7 @@ export type Lead = {
 
 export const listLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Lead[]> => {
-    await assertAdmin(context.userId);
+  .handler(async (): Promise<Lead[]> => {
     const { data, error } = await supabaseAdmin
       .from("leads").select("*").order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -86,8 +76,7 @@ export const updateLeadStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ id: z.string().uuid(), status: z.enum(["new", "contacted", "won", "lost"]) }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("leads").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -96,8 +85,7 @@ export const updateLeadStatus = createServerFn({ method: "POST" })
 export const updateLeadNotes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), notes: z.string().max(5000) }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("leads").update({ notes: data.notes }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -106,8 +94,7 @@ export const updateLeadNotes = createServerFn({ method: "POST" })
 export const deleteLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("leads").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -115,8 +102,7 @@ export const deleteLead = createServerFn({ method: "POST" })
 
 export const exportLeadsCSV = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<string> => {
-    await assertAdmin(context.userId);
+  .handler(async (): Promise<string> => {
     const { data, error } = await supabaseAdmin
       .from("leads").select("*").order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -135,8 +121,7 @@ export const replyToLead = createServerFn({ method: "POST" })
     subject: z.string().min(1).max(300),
     body: z.string().min(1).max(5000),
   }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+  .handler(async ({ data }) => {
     const html = `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
         <p style="white-space:pre-wrap">${data.body.replace(/</g, "&lt;")}</p>
@@ -145,7 +130,6 @@ export const replyToLead = createServerFn({ method: "POST" })
       </div>`;
     const result = await sendEmail({ to: data.to_email, subject: data.subject, html });
     if (!result.ok) throw new Error(result.reason ?? "Email send failed");
-    // Auto-mark as contacted
     await supabaseAdmin.from("leads").update({ status: "contacted" }).eq("id", data.id);
     return { ok: true };
   });

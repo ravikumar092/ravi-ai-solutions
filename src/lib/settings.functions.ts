@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
 
 export type SiteSettings = {
   calendly_url: string;
@@ -21,17 +21,6 @@ const DEFAULTS: SiteSettings = {
     "I design and ship AI workflows, agentic pipelines, and custom automation using n8n, Make, LangChain, CrewAI, and more — tailored to your business.",
   contact_email: "",
 };
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
-}
 
 export const getSettings = createServerFn({ method: "GET" }).handler(
   async (): Promise<SiteSettings> => {
@@ -55,8 +44,7 @@ export const updateSettings = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.record(z.string(), z.string()).parse(d)
   )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const upserts = Object.entries(data).map(([key, value]) => ({
       key,
       value,

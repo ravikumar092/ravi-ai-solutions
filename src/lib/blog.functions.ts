@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
 
 export type BlogPost = {
   id: string;
@@ -15,14 +15,6 @@ export type BlogPost = {
   created_at: string;
   updated_at: string;
 };
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles").select("role")
-    .eq("user_id", userId).eq("role", "admin").maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
-}
 
 function slugify(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -42,8 +34,7 @@ export const listPublicPosts = createServerFn({ method: "GET" }).handler(
 
 export const listAllPosts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<BlogPost[]> => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async (): Promise<BlogPost[]> => {
     const { data, error } = await supabaseAdmin
       .from("blog_posts")
       .select("id,title,slug,excerpt,content,is_published,published_at,sort_order,created_at,updated_at")
@@ -65,8 +56,7 @@ const postInput = z.object({
 export const upsertPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => postInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const slug = data.slug || slugify(data.title);
     const now = new Date().toISOString();
     const payload: any = {
@@ -78,7 +68,6 @@ export const upsertPost = createServerFn({ method: "POST" })
     };
     if (data.is_published && !data.id) payload.published_at = now;
     if (data.id) {
-      // If publishing for first time, set published_at
       const { data: existing } = await supabaseAdmin.from("blog_posts").select("is_published,published_at").eq("id", data.id).single();
       if (data.is_published && existing && !existing.is_published) payload.published_at = now;
       const { error } = await supabaseAdmin.from("blog_posts").update(payload).eq("id", data.id);
@@ -94,8 +83,7 @@ export const upsertPost = createServerFn({ method: "POST" })
 export const deletePost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("blog_posts").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

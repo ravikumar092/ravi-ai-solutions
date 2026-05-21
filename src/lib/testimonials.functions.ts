@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
 
 export type Testimonial = {
   id: string;
@@ -13,14 +13,6 @@ export type Testimonial = {
   is_active: boolean;
   created_at: string;
 };
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles").select("role")
-    .eq("user_id", userId).eq("role", "admin").maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
-}
 
 export const listPublicTestimonials = createServerFn({ method: "GET" }).handler(
   async (): Promise<Testimonial[]> => {
@@ -36,8 +28,7 @@ export const listPublicTestimonials = createServerFn({ method: "GET" }).handler(
 
 export const listAllTestimonials = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Testimonial[]> => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async (): Promise<Testimonial[]> => {
     const { data, error } = await supabaseAdmin
       .from("testimonials")
       .select("id,name,role,quote,image_url,sort_order,is_active,created_at")
@@ -59,8 +50,7 @@ const testimonialInput = z.object({
 export const upsertTestimonial = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => testimonialInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const payload = {
       name: data.name, role: data.role ?? null,
       quote: data.quote, image_url: data.image_url || null,
@@ -80,8 +70,7 @@ export const upsertTestimonial = createServerFn({ method: "POST" })
 export const deleteTestimonial = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("testimonials").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

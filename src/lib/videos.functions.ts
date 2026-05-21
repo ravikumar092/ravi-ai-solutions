@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
 
 export type Video = {
   id: string;
@@ -17,17 +17,6 @@ export type VideoListResult = {
   videos: Video[];
   tableMissing: boolean;
 };
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin role required");
-}
 
 export const listPublicVideos = createServerFn({ method: "GET" }).handler(
   async (): Promise<Video[]> => {
@@ -46,8 +35,7 @@ export const listPublicVideos = createServerFn({ method: "GET" }).handler(
 
 export const listAllVideos = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<VideoListResult> => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async (): Promise<VideoListResult> => {
     const { data, error } = await supabaseAdmin
       .from("videos")
       .select("id,title,youtube_id,description,sort_order,is_active,created_at")
@@ -75,8 +63,7 @@ const videoInput = z.object({
 export const upsertVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => videoInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("videos")
@@ -110,8 +97,7 @@ export const upsertVideo = createServerFn({ method: "POST" })
 export const deleteVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("videos").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

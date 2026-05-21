@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
 
 export type Faq = {
   id: string;
@@ -11,14 +11,6 @@ export type Faq = {
   is_active: boolean;
   created_at: string;
 };
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles").select("role")
-    .eq("user_id", userId).eq("role", "admin").maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
-}
 
 export const listPublicFaqs = createServerFn({ method: "GET" }).handler(
   async (): Promise<Faq[]> => {
@@ -34,8 +26,7 @@ export const listPublicFaqs = createServerFn({ method: "GET" }).handler(
 
 export const listAllFaqs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Faq[]> => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async (): Promise<Faq[]> => {
     const { data, error } = await supabaseAdmin
       .from("faqs").select("id,question,answer,sort_order,is_active,created_at").order("sort_order");
     if (error) { console.warn("[faqs]", error.message); return []; }
@@ -53,8 +44,7 @@ const faqInput = z.object({
 export const upsertFaq = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => faqInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const payload = { question: data.question, answer: data.answer, sort_order: data.sort_order, is_active: data.is_active };
     if (data.id) {
       const { error } = await supabaseAdmin.from("faqs").update(payload).eq("id", data.id);
@@ -70,8 +60,7 @@ export const upsertFaq = createServerFn({ method: "POST" })
 export const deleteFaq = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("faqs").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

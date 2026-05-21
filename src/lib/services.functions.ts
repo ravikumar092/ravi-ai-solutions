@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
 
 export type Service = {
   id: string;
@@ -13,17 +13,6 @@ export type Service = {
   sort_order: number;
   is_active: boolean;
 };
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin role required");
-}
 
 export const listPublicServices = createServerFn({ method: "GET" }).handler(
   async (): Promise<Service[]> => {
@@ -39,8 +28,7 @@ export const listPublicServices = createServerFn({ method: "GET" }).handler(
 
 export const listAllServices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<Service[]> => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async (): Promise<Service[]> => {
     const { data, error } = await supabaseAdmin
       .from("services")
       .select("id,title,description,icon,price,image_url,sort_order,is_active")
@@ -63,8 +51,7 @@ const serviceInput = z.object({
 export const upsertService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => serviceInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const payload = {
       title: data.title,
       description: data.description,
@@ -92,8 +79,7 @@ export const upsertService = createServerFn({ method: "POST" })
 export const deleteService = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin.from("services").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
