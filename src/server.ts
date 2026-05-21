@@ -2,7 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { handleLogin, handleCallback, handleLogout } from "./lib/auth-handlers";
+import { handleCallback, handleLogout } from "./lib/auth-handlers";
+import { handleFormLogin } from "./lib/form-auth.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -70,9 +71,12 @@ export default {
     const url = new URL(request.url);
 
     // Handle auth routes directly before TanStack Router
-    if (url.pathname === "/api/login") {
-      return handleLogin(request).catch(() =>
-        new Response(null, { status: 302, headers: { Location: "/login?error=server_error" } })
+    if (url.pathname === "/api/login" && request.method === "POST") {
+      return handleFormLogin(request).catch(() =>
+        new Response(JSON.stringify({ error: "Server error. Please try again." }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        })
       );
     }
     if (url.pathname === "/api/callback") {
