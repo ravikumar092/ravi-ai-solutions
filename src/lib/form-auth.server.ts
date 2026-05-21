@@ -1,16 +1,14 @@
-import pg from 'pg';
 import { createHash, timingSafeEqual } from 'crypto';
+import { supabaseAdmin } from '@/integrations/supabase/admin-client';
 import { saveSession, generateSessionId } from './replit-auth.server';
 
-const { Pool } = pg;
-let _pool: InstanceType<typeof Pool> | undefined;
-function getPool() {
-  if (!_pool) _pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  return _pool;
-}
+// Fixed UUID for the built-in admin user — compatible with Supabase user_roles (uuid column)
+const ADMIN_USER_UUID = '00000000-0000-0000-0000-000000000001';
 
 function hashPassword(password: string): string {
-  return createHash('sha256').update(password + (process.env.PASSWORD_SALT ?? 'rk-ai-lab-salt')).digest('hex');
+  return createHash('sha256')
+    .update(password + (process.env.PASSWORD_SALT ?? 'rk-ai-lab-salt'))
+    .digest('hex');
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -21,18 +19,15 @@ function safeEqual(a: string, b: string): boolean {
   }
 }
 
-async function ensureAdminUser(username: string): Promise<void> {
-  const pool = getPool();
-  await pool.query(
-    `INSERT INTO replit_users (id, email, first_name, updated_at)
-     VALUES ($1, $2, $3, NOW())
-     ON CONFLICT (id) DO NOTHING`,
-    [username, null, username]
-  );
-  await pool.query(
-    `INSERT INTO user_admin_roles (user_id) VALUES ($1) ON CONFLICT DO NOTHING`,
-    [username]
-  );
+async function ensureAdminRole(): Promise<void> {
+  try {
+    await supabaseAdmin.from('user_roles').upsert(
+      { user_id: ADMIN_USER_UUID, role: 'admin' },
+      { onConflict: 'user_id' }
+    );
+  } catch (e) {
+    console.error('[form-auth] ensureAdminRole error:', e);
+  }
 }
 
 export async function handleFormLogin(request: Request): Promise<Response> {
@@ -59,16 +54,14 @@ export async function handleFormLogin(request: Request): Promise<Response> {
 
   if (!adminPassword) {
     console.error('[form-auth] ADMIN_PASSWORD env var is not set');
-    return new Response(JSON.stringify({ error: 'Admin credentials not configured. Set ADMIN_PASSWORD.' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: 'Admin credentials not configured on the server.' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   const usernameMatch = safeEqual(username.toLowerCase(), adminUsername.toLowerCase());
-  const passwordHash = hashPassword(password);
-  const expectedHash = hashPassword(adminPassword);
-  const passwordMatch = safeEqual(passwordHash, expectedHash);
+  const passwordMatch = safeEqual(hashPassword(password), hashPassword(adminPassword));
 
   if (!usernameMatch || !passwordMatch) {
     return new Response(JSON.stringify({ error: 'Invalid username or password.' }), {
@@ -77,10 +70,11 @@ export async function handleFormLogin(request: Request): Promise<Response> {
     });
   }
 
-  await ensureAdminUser(adminUsername);
+  // Ensure admin record exists in Supabase user_roles table
+  await ensureAdminRole();
 
   const sessionId = generateSessionId();
-  await saveSession(sessionId, adminUsername, {
+  await saveSession(sessionId, ADMIN_USER_UUID, {
     email: null,
     firstName: adminUsername,
     lastName: null,

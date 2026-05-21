@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { supabaseAdmin } from '@/integrations/supabase/admin-client';
 
 const { Pool } = pg;
 
@@ -20,24 +21,16 @@ export type ReplitSession = {
   };
 };
 
-async function getUserFromDb(userId: string) {
-  const pool = getPool();
+async function isAdminInSupabase(userId: string): Promise<boolean> {
   try {
-    const res = await pool.query('SELECT * FROM replit_users WHERE id = $1', [userId]);
-    return res.rows[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function isAdminInDb(userId: string): Promise<boolean> {
-  const pool = getPool();
-  try {
-    const res = await pool.query(
-      'SELECT 1 FROM user_admin_roles WHERE user_id = $1 LIMIT 1',
-      [userId]
-    );
-    return res.rows.length > 0;
+    const { data, error } = await supabaseAdmin
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .limit(1);
+    if (error) return false;
+    return (data?.length ?? 0) > 0;
   } catch {
     return false;
   }
@@ -63,18 +56,17 @@ export async function getSession(request: Request): Promise<ReplitSession | null
     const sess = res.rows[0].sess as any;
     if (!sess?.userId) return null;
 
-    const user = await getUserFromDb(sess.userId);
-    const admin = await isAdminInDb(sess.userId);
+    const admin = await isAdminInSupabase(sess.userId);
 
     return {
       userId: sess.userId,
       isAdmin: admin,
       user: {
         id: sess.userId,
-        email: user?.email ?? sess.email ?? null,
-        firstName: user?.first_name ?? sess.firstName ?? null,
-        lastName: user?.last_name ?? sess.lastName ?? null,
-        profileImageUrl: user?.profile_image_url ?? sess.profileImageUrl ?? null,
+        email: sess.email ?? null,
+        firstName: sess.firstName ?? null,
+        lastName: sess.lastName ?? null,
+        profileImageUrl: sess.profileImageUrl ?? null,
       },
     };
   } catch (e) {

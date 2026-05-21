@@ -29,10 +29,7 @@ export async function initDb() {
 
       CREATE INDEX IF NOT EXISTS sessions_expire_idx ON sessions (expire);
 
-      CREATE TABLE IF NOT EXISTS user_admin_roles (
-        user_id TEXT PRIMARY KEY,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
+      -- user_admin_roles lives in Supabase (user_roles table)
     `);
     console.log('[db-init] Tables ready');
   } catch (e) {
