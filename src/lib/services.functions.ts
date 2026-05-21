@@ -9,6 +9,7 @@ export type Service = {
   description: string;
   icon: string | null;
   price: string | null;
+  image_url: string | null;
   sort_order: number;
   is_active: boolean;
 };
@@ -28,11 +29,11 @@ export const listPublicServices = createServerFn({ method: "GET" }).handler(
   async (): Promise<Service[]> => {
     const { data, error } = await supabaseAdmin
       .from("services")
-      .select("id,title,description,icon,price,sort_order,is_active")
+      .select("id,title,description,icon,price,image_url,sort_order,is_active")
       .eq("is_active", true)
       .order("sort_order");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []) as Service[];
   },
 );
 
@@ -42,10 +43,10 @@ export const listAllServices = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { data, error } = await supabaseAdmin
       .from("services")
-      .select("id,title,description,icon,price,sort_order,is_active")
+      .select("id,title,description,icon,price,image_url,sort_order,is_active")
       .order("sort_order");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []) as Service[];
   });
 
 const serviceInput = z.object({
@@ -54,6 +55,7 @@ const serviceInput = z.object({
   description: z.string().min(1).max(2000),
   icon: z.string().max(60).nullable().optional(),
   price: z.string().max(60).nullable().optional(),
+  image_url: z.string().url().nullable().optional().or(z.literal("")),
   sort_order: z.number().int().min(0).max(9999).default(0),
   is_active: z.boolean().default(true),
 });
@@ -63,31 +65,23 @@ export const upsertService = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => serviceInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
+    const payload = {
+      title: data.title,
+      description: data.description,
+      icon: data.icon ?? null,
+      price: data.price ?? null,
+      image_url: data.image_url || null,
+      sort_order: data.sort_order,
+      is_active: data.is_active,
+    };
     if (data.id) {
-      const { error } = await supabaseAdmin
-        .from("services")
-        .update({
-          title: data.title,
-          description: data.description,
-          icon: data.icon ?? null,
-          price: data.price ?? null,
-          sort_order: data.sort_order,
-          is_active: data.is_active,
-        })
-        .eq("id", data.id);
+      const { error } = await supabaseAdmin.from("services").update(payload).eq("id", data.id);
       if (error) throw new Error(error.message);
       return { id: data.id };
     } else {
       const { data: row, error } = await supabaseAdmin
         .from("services")
-        .insert({
-          title: data.title,
-          description: data.description,
-          icon: data.icon ?? null,
-          price: data.price ?? null,
-          sort_order: data.sort_order,
-          is_active: data.is_active,
-        })
+        .insert(payload)
         .select("id")
         .single();
       if (error) throw new Error(error.message);

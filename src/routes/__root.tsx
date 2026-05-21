@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { CursorGlow } from "@/components/site/CursorGlow";
 
 import appCss from "../styles.css?url";
 
@@ -113,6 +114,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <CursorGlow />
       <Outlet />
     </QueryClientProvider>
   );

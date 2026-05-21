@@ -7,7 +7,7 @@ export function Footer() {
         <p>© {new Date().getFullYear()} Ravi Kumar AI Lab. All rights reserved.</p>
         <div className="flex items-center gap-6">
           <a
-            href="https://www.youtube.com/@ravikumar-ailab"
+            href="https://www.youtube.com/@RaviKumarAILab"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 hover:text-foreground transition"
