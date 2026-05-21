@@ -22,6 +22,26 @@ function browserStubStorageContext(): Plugin {
   };
 }
 
+function browserStubNodeModules(): Plugin {
+  const NODE_ONLY = ["pg", "pg-native", "pg-pool", "pg-types", "postgres-bytea", "postgres-date", "postgres-interval"];
+  return {
+    name: "browser-stub-node-modules",
+    enforce: "pre",
+    resolveId(source, _importer, options) {
+      if (!options?.ssr && NODE_ONLY.some((m) => source === m || source.startsWith(m + "/"))) {
+        return "\0browser-stub:" + source;
+      }
+      return null;
+    },
+    load(id) {
+      if (id.startsWith("\0browser-stub:")) {
+        return "export default {}; export const Pool = class {}; export const Client = class {};";
+      }
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
@@ -40,6 +60,6 @@ export default defineConfig({
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ""),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? ""),
     },
-    plugins: [browserStubStorageContext()],
+    plugins: [browserStubStorageContext(), browserStubNodeModules()],
   },
 });
