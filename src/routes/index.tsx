@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Workflow, Bot, Sparkles, ArrowRight, Youtube, Zap, Cpu, Check, ChevronLeft, ChevronRight, Play, Quote, ChevronDown, FileText } from "lucide-react";
@@ -610,14 +610,14 @@ function BlogSection({ posts }: { posts: any[] }) {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {shown.map((p) => (
-            <div key={p.id} className="rounded-xl border border-border bg-card/40 p-6 flex flex-col gap-3 hover:border-primary/20 transition-colors group">
+            <Link key={p.id} to="/blog/$slug" params={{ slug: p.slug }} className="rounded-xl border border-border bg-card/40 p-6 flex flex-col gap-3 hover:border-primary/20 transition-colors group">
               <FileText size={15} className="text-primary/50" />
               <h3 className="font-semibold text-base leading-snug group-hover:text-primary transition-colors">{p.title}</h3>
               {p.excerpt && <p className="text-sm text-muted-foreground line-clamp-3">{p.excerpt}</p>}
               <p className="text-xs text-muted-foreground mt-auto pt-2">
                 {p.published_at ? new Date(p.published_at).toLocaleDateString("en", { year: "numeric", month: "long", day: "numeric" }) : ""}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

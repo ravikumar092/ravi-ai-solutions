@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 
 export type Testimonial = {
   id: string;
@@ -27,8 +27,8 @@ export const listPublicTestimonials = createServerFn({ method: "GET" }).handler(
 );
 
 export const listAllTestimonials = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<Testimonial[]> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("testimonials")
       .select("id,name,role,quote,image_url,sort_order,is_active,created_at")
@@ -48,9 +48,9 @@ const testimonialInput = z.object({
 });
 
 export const upsertTestimonial = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => testimonialInput.parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const payload = {
       name: data.name, role: data.role ?? null,
       quote: data.quote, image_url: data.image_url || null,
@@ -68,9 +68,9 @@ export const upsertTestimonial = createServerFn({ method: "POST" })
   });
 
 export const deleteTestimonial = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("testimonials").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

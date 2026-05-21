@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 
 export type SiteSettings = {
   calendly_url: string;
@@ -40,11 +40,11 @@ export const getSettings = createServerFn({ method: "GET" }).handler(
 );
 
 export const updateSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.record(z.string(), z.string()).parse(d)
   )
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const upserts = Object.entries(data).map(([key, value]) => ({
       key,
       value,

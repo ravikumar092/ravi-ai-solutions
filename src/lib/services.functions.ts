@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 
 export type Service = {
   id: string;
@@ -27,8 +27,8 @@ export const listPublicServices = createServerFn({ method: "GET" }).handler(
 );
 
 export const listAllServices = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<Service[]> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("services")
       .select("id,title,description,icon,price,image_url,sort_order,is_active")
@@ -49,9 +49,9 @@ const serviceInput = z.object({
 });
 
 export const upsertService = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => serviceInput.parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const payload = {
       title: data.title,
       description: data.description,
@@ -77,9 +77,9 @@ export const upsertService = createServerFn({ method: "POST" })
   });
 
 export const deleteService = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("services").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

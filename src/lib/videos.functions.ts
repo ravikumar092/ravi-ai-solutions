@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 
 export type Video = {
   id: string;
@@ -34,8 +34,8 @@ export const listPublicVideos = createServerFn({ method: "GET" }).handler(
 );
 
 export const listAllVideos = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<VideoListResult> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("videos")
       .select("id,title,youtube_id,description,sort_order,is_active,created_at")
@@ -61,9 +61,9 @@ const videoInput = z.object({
 });
 
 export const upsertVideo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => videoInput.parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("videos")
@@ -95,9 +95,9 @@ export const upsertVideo = createServerFn({ method: "POST" })
   });
 
 export const deleteVideo = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("videos").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

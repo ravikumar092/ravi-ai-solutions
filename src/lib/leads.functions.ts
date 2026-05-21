@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 import { sendEmail, newLeadEmailHtml } from "./email-utils";
 
 const leadInput = z.object({
@@ -64,8 +64,8 @@ export type Lead = {
 };
 
 export const listLeads = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<Lead[]> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("leads").select("*").order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -73,36 +73,36 @@ export const listLeads = createServerFn({ method: "GET" })
   });
 
 export const updateLeadStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ id: z.string().uuid(), status: z.enum(["new", "contacted", "won", "lost"]) }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("leads").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const updateLeadNotes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), notes: z.string().max(5000) }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("leads").update({ notes: data.notes }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const deleteLead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("leads").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const exportLeadsCSV = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<string> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("leads").select("*").order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -113,7 +113,6 @@ export const exportLeadsCSV = createServerFn({ method: "GET" })
   });
 
 export const replyToLead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
     id: z.string().uuid(),
     to_email: z.string().email(),
@@ -122,6 +121,7 @@ export const replyToLead = createServerFn({ method: "POST" })
     body: z.string().min(1).max(5000),
   }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const html = `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto">
         <p style="white-space:pre-wrap">${data.body.replace(/</g, "&lt;")}</p>

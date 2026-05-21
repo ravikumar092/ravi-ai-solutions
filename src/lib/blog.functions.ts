@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 
 export type BlogPost = {
   id: string;
@@ -32,9 +32,22 @@ export const listPublicPosts = createServerFn({ method: "GET" }).handler(
   }
 );
 
+export const getPostBySlug = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({ slug: z.string() }).parse(d))
+  .handler(async ({ data }): Promise<BlogPost | null> => {
+    const { data: row, error } = await supabaseAdmin
+      .from("blog_posts")
+      .select("id,title,slug,excerpt,content,is_published,published_at,sort_order,created_at,updated_at")
+      .eq("slug", data.slug)
+      .eq("is_published", true)
+      .maybeSingle();
+    if (error) { console.warn("[blog/slug]", error.message); return null; }
+    return (row ?? null) as BlogPost | null;
+  });
+
 export const listAllPosts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<BlogPost[]> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("blog_posts")
       .select("id,title,slug,excerpt,content,is_published,published_at,sort_order,created_at,updated_at")
@@ -54,9 +67,9 @@ const postInput = z.object({
 });
 
 export const upsertPost = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => postInput.parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const slug = data.slug || slugify(data.title);
     const now = new Date().toISOString();
     const payload: any = {
@@ -81,9 +94,9 @@ export const upsertPost = createServerFn({ method: "POST" })
   });
 
 export const deletePost = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("blog_posts").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

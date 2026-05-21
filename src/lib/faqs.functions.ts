@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "../integrations/supabase/admin-client";
-import { requireSupabaseAuth } from "../integrations/supabase/auth-middleware";
+import { requireAdminAuth } from "../integrations/supabase/auth-middleware";
 
 export type Faq = {
   id: string;
@@ -25,8 +25,8 @@ export const listPublicFaqs = createServerFn({ method: "GET" }).handler(
 );
 
 export const listAllFaqs = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async (): Promise<Faq[]> => {
+    await requireAdminAuth();
     const { data, error } = await supabaseAdmin
       .from("faqs").select("id,question,answer,sort_order,is_active,created_at").order("sort_order");
     if (error) { console.warn("[faqs]", error.message); return []; }
@@ -42,9 +42,9 @@ const faqInput = z.object({
 });
 
 export const upsertFaq = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => faqInput.parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const payload = { question: data.question, answer: data.answer, sort_order: data.sort_order, is_active: data.is_active };
     if (data.id) {
       const { error } = await supabaseAdmin.from("faqs").update(payload).eq("id", data.id);
@@ -58,9 +58,9 @@ export const upsertFaq = createServerFn({ method: "POST" })
   });
 
 export const deleteFaq = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
+    await requireAdminAuth();
     const { error } = await supabaseAdmin.from("faqs").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
