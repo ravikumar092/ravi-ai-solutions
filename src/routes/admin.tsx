@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, useNavigate, Link, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, LayoutGrid, Youtube, Users, MessageSquare,
@@ -14,10 +14,17 @@ import { SettingsTab } from "@/components/admin/SettingsTab";
 import { LeadsTab } from "@/components/admin/LeadsTab";
 import { ServicesAdmin } from "@/components/admin/ServicesTab";
 import { VideosAdmin } from "@/components/admin/VideosTab";
-import { useAuth } from "@/hooks/use-auth";
+import { getMe } from "@/routes/api/me";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Ravi Kumar AI Lab" }] }),
+  loader: async () => {
+    const user = await getMe();
+    if (!user) {
+      throw redirect({ to: "/login" });
+    }
+    return { user };
+  },
   component: AdminPage,
 });
 
@@ -38,22 +45,9 @@ const NAV: { id: Section; label: string; icon: any }[] = [
 ];
 
 function AdminPage() {
-  const nav = useNavigate();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user } = Route.useLoaderData();
   const [section, setSection] = useState<Section>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      nav({ to: "/login" });
-    }
-  }, [isLoading, isAuthenticated, nav]);
-
-  if (isLoading || !isAuthenticated) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-muted-foreground text-sm animate-pulse">Loading…</div>
-    </div>
-  );
 
   const handleNav = (s: string) => {
     setSection(s as Section);
