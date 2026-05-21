@@ -56,7 +56,8 @@ export async function getSession(request: Request): Promise<ReplitSession | null
     const sess = res.rows[0].sess as any;
     if (!sess?.userId) return null;
 
-    const admin = await isAdminInSupabase(sess.userId);
+    // Form-based admin sessions store isAdmin directly; OIDC users check Supabase
+    const admin = sess.isAdmin === true ? true : await isAdminInSupabase(sess.userId);
 
     return {
       userId: sess.userId,

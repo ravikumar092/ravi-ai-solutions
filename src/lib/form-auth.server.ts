@@ -1,9 +1,7 @@
 import { createHash, timingSafeEqual } from 'crypto';
-import { supabaseAdmin } from '@/integrations/supabase/admin-client';
 import { saveSession, generateSessionId } from './replit-auth.server';
 
-// Fixed UUID for the built-in admin user — compatible with Supabase user_roles (uuid column)
-const ADMIN_USER_UUID = '00000000-0000-0000-0000-000000000001';
+const ADMIN_USER_ID = 'form-admin';
 
 function hashPassword(password: string): string {
   return createHash('sha256')
@@ -16,17 +14,6 @@ function safeEqual(a: string, b: string): boolean {
     return timingSafeEqual(Buffer.from(a), Buffer.from(b));
   } catch {
     return false;
-  }
-}
-
-async function ensureAdminRole(): Promise<void> {
-  try {
-    await supabaseAdmin.from('user_roles').upsert(
-      { user_id: ADMIN_USER_UUID, role: 'admin' },
-      { onConflict: 'user_id' }
-    );
-  } catch (e) {
-    console.error('[form-auth] ensureAdminRole error:', e);
   }
 }
 
@@ -70,11 +57,10 @@ export async function handleFormLogin(request: Request): Promise<Response> {
     });
   }
 
-  // Ensure admin record exists in Supabase user_roles table
-  await ensureAdminRole();
-
+  // Store isAdmin=true directly in the session — no user_roles table required
   const sessionId = generateSessionId();
-  await saveSession(sessionId, ADMIN_USER_UUID, {
+  await saveSession(sessionId, ADMIN_USER_ID, {
+    isAdmin: true,
     email: null,
     firstName: adminUsername,
     lastName: null,
