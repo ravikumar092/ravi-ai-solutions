@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Image, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,16 +17,26 @@ export function TestimonialsTab() {
   const remove = useServerFn(deleteTestimonial);
   const qc = useQueryClient();
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["admin-testimonials"], queryFn: () => fetchAll() });
+  const { data = [], isLoading, error, isError } = useQuery({ 
+    queryKey: ["admin-testimonials"], 
+    queryFn: () => fetchAll() 
+  });
   const [editing, setEditing] = useState<any | null>(null);
 
+  useEffect(() => {
+    if (isError) {
+      console.error("admin-testimonials query error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load testimonials");
+    }
+  }, [isError, error]);
+
   const save = useMutation({
-    mutationFn: (v: any) => upsert({ data: v }),
+    mutationFn: (v: any) => upsert(v),
     onSuccess: () => { toast.success("Testimonial saved"); qc.invalidateQueries({ queryKey: ["admin-testimonials"] }); qc.invalidateQueries({ queryKey: ["public-testimonials"] }); setEditing(null); },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
   const del = useMutation({
-    mutationFn: (id: string) => remove({ data: { id } }),
+    mutationFn: (id: string) => remove({ id }),
     onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-testimonials"] }); qc.invalidateQueries({ queryKey: ["public-testimonials"] }); },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
@@ -43,7 +53,17 @@ export function TestimonialsTab() {
 
         {isLoading && [1,2,3].map(i => <div key={i} className="h-20 rounded-lg bg-card/50 animate-pulse" />)}
 
-        {data.length === 0 && !isLoading && (
+        {isError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-medium mb-1">Failed to load testimonials</p>
+              <p className="opacity-80">{(error as any)?.message ?? "An error occurred"}</p>
+            </div>
+          </div>
+        )}
+
+        {data.length === 0 && !isLoading && !isError && (
           <div className="rounded-xl border border-dashed border-border p-10 text-center">
             <p className="text-sm text-muted-foreground">No testimonials yet. Add your first client quote.</p>
           </div>

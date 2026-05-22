@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2, Download, Search, Filter, ChevronDown, ChevronUp, Send, X } from "lucide-react";
+import { Trash2, Download, Search, Filter, ChevronDown, ChevronUp, Send, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,7 +25,14 @@ export function LeadsTab() {
   const sendReply = useServerFn(replyToLead);
   const qc = useQueryClient();
 
-  const { data: leads = [], isLoading } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
+  const { data: leads = [], isLoading, error, isError } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
+
+  useEffect(() => {
+    if (isError) {
+      console.error("admin-leads query error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load leads");
+    }
+  }, [isError, error]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -51,23 +58,23 @@ export function LeadsTab() {
   }, [leads]);
 
   const setStatus = useMutation({
-    mutationFn: (v: { id: string; status: any }) => updateStatus({ data: v }),
+    mutationFn: (v: { id: string; status: any }) => updateStatus(v),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-leads"] }),
   });
 
   const saveNotes = useMutation({
-    mutationFn: (v: { id: string; notes: string }) => updateNotes({ data: v }),
+    mutationFn: (v: { id: string; notes: string }) => updateNotes(v),
     onSuccess: () => { toast.success("Notes saved"); qc.invalidateQueries({ queryKey: ["admin-leads"] }); },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
 
   const del = useMutation({
-    mutationFn: (id: string) => removeLeads({ data: { id } }),
+    mutationFn: (id: string) => removeLeads({ id }),
     onSuccess: () => { toast.success("Lead deleted"); qc.invalidateQueries({ queryKey: ["admin-leads"] }); },
   });
 
   const reply = useMutation({
-    mutationFn: (v: any) => sendReply({ data: v }),
+    mutationFn: (v: any) => sendReply(v),
     onSuccess: () => {
       toast.success("Reply sent and lead marked as contacted");
       setReplyState(null);
@@ -181,7 +188,18 @@ export function LeadsTab() {
       {/* Lead list */}
       <div className="space-y-2">
         {isLoading && [1,2,3].map(i => <div key={i} className="h-16 rounded-lg bg-card/50 animate-pulse" />)}
-        {!isLoading && filtered.length === 0 && (
+
+        {isError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive animate-fade-in">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-medium mb-1">Failed to load leads</p>
+              <p className="opacity-80">{(error as any)?.message ?? "An error occurred"}</p>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !isError && filtered.length === 0 && (
           <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
             {search || statusFilter !== "all" ? "No leads match your filters." : "No leads yet."}
           </div>

@@ -2,25 +2,50 @@ import { useEffect, useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Workflow, Bot, Sparkles, ArrowRight, Youtube, Zap, Cpu, Check, ChevronLeft, ChevronRight, Play, Quote, ChevronDown, FileText } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Workflow,
+  Bot,
+  Sparkles,
+  ArrowRight,
+  Youtube,
+  Zap,
+  Cpu,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Quote,
+  ChevronDown,
+  FileText,
+  Users,
+  GraduationCap,
+  BookOpen,
+  ArrowUpRight,
+  Loader2,
+  Mail
+} from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { BookCallModal } from "@/components/site/BookCallModal";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { listPublicServices } from "@/lib/services.functions";
 import { listPublicVideos } from "@/lib/videos.functions";
 import { listPublicTestimonials } from "@/lib/testimonials.functions";
 import { listPublicFaqs } from "@/lib/faqs.functions";
 import { listPublicPosts } from "@/lib/blog.functions";
+import { submitLead } from "@/lib/leads.functions";
 import { useReveal } from "@/hooks/use-reveal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Ravi Kumar AI Lab — AI Automation & Agentic Systems" },
-      { name: "description", content: "Senior Full Stack Developer & AI Systems Architect. n8n, Make, custom AI agents, and agentic coding tools for modern business automation." },
-      { property: "og:title", content: "Ravi Kumar AI Lab — AI Automation & Agentic Systems" },
-      { property: "og:description", content: "n8n, Make, LangChain, custom AI agents, and full-stack agentic automation for your business." },
+      { title: "The Solo Entrepreneur — Build Smarter. Automate More. Earn Online." },
+      { name: "description", content: "The ultimate builder platform, AI tools, cloneable workflows, courses, and accountability community for solo founders, creators, and indie hackers by Ravi Kumar." },
+      { property: "og:title", content: "The Solo Entrepreneur — Build Smarter. Automate More. Earn Online." },
+      { property: "og:description", content: "Upgrade your solo enterprise with interactive startup validators, pricing models, n8n templates, and community challenges." },
     ],
   }),
   component: Landing,
@@ -36,6 +61,7 @@ function Landing() {
   const fetchTestimonials = useServerFn(listPublicTestimonials);
   const fetchFaqs = useServerFn(listPublicFaqs);
   const fetchPosts = useServerFn(listPublicPosts);
+
   const { data: services } = useQuery({ queryKey: ["public-services"], queryFn: () => fetchServices() });
   const { data: videos } = useQuery({ queryKey: ["public-videos"], queryFn: () => fetchVideos() });
   const { data: testimonials } = useQuery({ queryKey: ["public-testimonials"], queryFn: () => fetchTestimonials() });
@@ -48,16 +74,37 @@ function Landing() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       <Header />
       <main>
+        {/* Hero Section */}
         <Hero onBook={() => { setSelectedService(""); setModal(true); }} />
+
+        {/* Bento Grid Platform Ecosystem */}
+        <BentoGrid />
+
+        {/* Dynamic Services Packages */}
         <Services services={services ?? []} onBuy={handleBuyService} />
+
+        {/* Client Testimonials */}
         {(testimonials ?? []).length > 0 && <Testimonials testimonials={testimonials ?? []} />}
+
+        {/* Video Tutorial Library */}
         <Tutorials videos={videos ?? []} />
+
+        {/* Blog / Articles */}
         {(posts ?? []).length > 0 && <BlogSection posts={posts ?? []} />}
+
+        {/* Professional Profile */}
         <About />
+
+        {/* Lead Capture Funnel (Free Ebook Download) */}
+        <LeadCapture />
+
+        {/* Frequently Asked Questions */}
         {(faqs ?? []).length > 0 && <FaqSection faqs={faqs ?? []} />}
+
+        {/* Live Calendly Scheduler */}
         <Schedule />
       </main>
       <Footer />
@@ -66,152 +113,183 @@ function Landing() {
   );
 }
 
-/* ── CAROUSEL SLIDES ── */
-const SLIDES = [
-  {
-    tag: "No-code automation",
-    headline: "Workflows that run while you sleep.",
-    body: "n8n and Make pipelines built end-to-end — from triggers to actions — deployed and maintained for your business.",
-    tools: ["n8n", "Make", "Zapier"],
-    icon: Workflow,
-  },
-  {
-    tag: "Agentic AI systems",
-    headline: "Agents that think, decide, and act.",
-    body: "Custom AI agents built with LangChain, CrewAI, and AutoGen that handle multi-step reasoning and real-world tasks autonomously.",
-    tools: ["LangChain", "CrewAI", "AutoGen"],
-    icon: Bot,
-  },
-  {
-    tag: "Full-stack AI apps",
-    headline: "From prompt to production-ready.",
-    body: "Full-stack agentic applications — APIs, databases, agent orchestration, and interfaces — built to scale with your business.",
-    tools: ["OpenAI", "Claude", "Cursor"],
-    icon: Cpu,
-  },
-  {
-    tag: "YouTube tutorials",
-    headline: "Learn AI automation for free.",
-    body: "Practical, no-fluff breakdowns of real implementations published on YouTube. Watch the exact techniques I use for clients.",
-    tools: ["Tutorials", "Live builds", "Deep dives"],
-    icon: Youtube,
-  },
-];
-
 /* ── HERO ── */
 function Hero({ onBook }: { onBook: () => void }) {
   const r = useReveal<HTMLDivElement>();
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  const next = useCallback(() => setActive((a) => (a + 1) % SLIDES.length), []);
-  const prev = useCallback(() => setActive((a) => (a - 1 + SLIDES.length) % SLIDES.length), []);
 
   useEffect(() => { r.current?.classList.add("in"); }, [r]);
 
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(next, 4500);
-    return () => clearInterval(id);
-  }, [next, paused]);
-
-  const slide = SLIDES[active];
-  const SlideIcon = slide.icon;
-
   return (
-    <section className="relative pt-40 pb-16 overflow-hidden">
-      <div className="absolute inset-0 grid-bg pointer-events-none" />
+    <section className="relative pt-40 pb-20 overflow-hidden">
+      <div className="absolute inset-0 grid-bg pointer-events-none opacity-85" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
 
-      <div ref={r} className="reveal relative mx-auto max-w-4xl px-6 text-center">
-        <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-8">
-          AI Systems Architect &nbsp;·&nbsp; 13+ Years Full-Stack
-        </p>
+      <div ref={r} className="reveal relative mx-auto max-w-5xl px-6 text-center">
+        {/* Glow Accent */}
+        <div className="absolute left-1/2 top-1/4 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
 
-        <h1 className="font-display text-5xl md:text-[4.5rem] font-bold leading-[1.04] tracking-[-0.03em] mb-7">
-          Build autonomous systems<br className="hidden md:block" /> that work{" "}
-          <span className="accent-text accent-line">while you sleep</span>.
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium uppercase tracking-wider mb-8 select-none animate-fade-in">
+          <Zap size={12} className="animate-pulse" />
+          Build Smarter &nbsp;·&nbsp; Automate More &nbsp;·&nbsp; Earn Online
+        </div>
+
+        <h1 className="font-display text-5xl md:text-[4.75rem] font-bold leading-[1.03] tracking-[-0.03em] mb-8">
+          The Ultimate Platform for<br />
+          <span className="neon-text font-black">Solo Entrepreneurs</span>
         </h1>
 
-        <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">
-          I design and ship AI workflows, agentic pipelines, and custom automation using n8n, Make, LangChain, CrewAI, and more — tailored to your business.
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10">
+          Scale your micro-business with high-utility AI tools, production-ready n8n workflows, practical prompt libraries, and a community of active builders.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
-          <Button variant="hero" size="lg" onClick={onBook} className="h-11 px-7 text-sm font-semibold">
-            Book a Free Discovery Call <ArrowRight size={15} />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 relative z-10">
+          <Button variant="hero" size="lg" onClick={onBook} className="h-12 px-8 text-sm font-semibold w-full sm:w-auto">
+            Book a System Architecture Call <ArrowRight size={15} />
           </Button>
-          <Button variant="outlineNeon" size="lg" asChild className="h-11 px-7 text-sm">
-            <a href="#services">View Packages</a>
+          <Button variant="outlineNeon" size="lg" asChild className="h-12 px-8 text-sm w-full sm:w-auto">
+            <a href="#ecosystem">Explore Ecosystem</a>
           </Button>
         </div>
 
-        {/* ── Carousel ── */}
-        <div
-          className="relative rounded-xl border border-border bg-card/50 backdrop-blur p-6 md:p-8 text-left overflow-hidden"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-        >
-          <div className="absolute top-0 left-0 right-0 h-0.5 bg-border overflow-hidden rounded-t-xl">
-            <div
-              className="h-full bg-primary transition-none"
-              style={{
-                width: `${((active + 1) / SLIDES.length) * 100}%`,
-                transition: paused ? "none" : "width 4.5s linear",
-              }}
-            />
-          </div>
-
-          <div className="flex items-start gap-5">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-              <SlideIcon size={18} />
+        {/* Credibility Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border/40 rounded-xl overflow-hidden border border-border/30 max-w-4xl mx-auto">
+          {[
+            { value: "13+", label: "Years Experience" },
+            { value: "5,000+", label: "Active Founders" },
+            { value: "20+", label: "Cloneable Workflows" },
+            { value: "$2M+", label: "Client Revenue Generated" },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-card/30 backdrop-blur-sm py-6 text-center">
+              <p className="font-display text-3xl font-extrabold neon-text">{stat.value}</p>
+              <p className="text-xs text-muted-foreground mt-1.5 font-medium uppercase tracking-wider">{stat.label}</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium tracking-[0.2em] uppercase text-primary mb-2">{slide.tag}</p>
-              <h3 className="font-display text-lg md:text-xl font-bold mb-2 leading-snug">{slide.headline}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">{slide.body}</p>
-              <div className="flex flex-wrap gap-2">
-                {slide.tools.map((t) => (
-                  <span key={t} className="px-2.5 py-1 text-xs border border-border rounded-md text-muted-foreground bg-muted/40">
-                    {t}
-                  </span>
-                ))}
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── BENTO GRID ── */
+function BentoGrid() {
+  const r = useReveal<HTMLDivElement>();
+  return (
+    <section id="ecosystem" className="py-24 border-t border-border bg-muted/5 relative">
+      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+      <div ref={r} className="reveal mx-auto max-w-7xl px-6 relative z-10">
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <p className="text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-3">Platform Pillars</p>
+          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
+            An Operating System for <span className="neon-text">Modern Builders</span>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
+            Five interconnected hubs designed to help you build software products, optimize digital margins, and grow solo-operating leverage.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {/* Box 1: AI Tools (Large) */}
+          <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border border-border bg-card/45 p-8 transition-all hover:border-primary/20">
+            <div className="absolute top-0 right-0 p-8 text-primary/10 group-hover:text-primary/20 transition-colors pointer-events-none">
+              <Sparkles size={120} />
+            </div>
+            <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
+              <div>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-primary mb-4 bg-primary/5 px-2.5 py-0.5 rounded-full border border-primary/25">
+                  Interactive Engine
+                </span>
+                <h3 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                  AI Tools Hub <ArrowUpRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
+                  Validate your startup hypotheses, structure pricing tiers, and outline step-by-step launch roadmaps inside our interactive AI-first calculator playground.
+                </p>
+              </div>
+              <div className="mt-8 flex gap-3">
+                <Button size="xs" variant="outlineNeon" asChild className="text-[11px] h-7 px-3.5">
+                  <Link to="/tools">Launch Generators</Link>
+                </Button>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-6">
-            <div className="flex gap-1.5">
-              {SLIDES.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => { setActive(i); setPaused(true); }}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${i === active ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"}`}
-                />
-              ))}
+          {/* Box 2: Store (Medium) */}
+          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/45 p-8 transition-all hover:border-primary/20">
+            <div className="absolute top-0 right-0 p-8 text-green-500/10 pointer-events-none">
+              <BookOpen size={100} />
             </div>
-            <div className="flex gap-1">
-              <button onClick={() => { prev(); setPaused(true); }} className="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors">
-                <ChevronLeft size={14} />
-              </button>
-              <button onClick={() => { next(); setPaused(true); }} className="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors">
-                <ChevronRight size={14} />
-              </button>
+            <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
+              <div>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-green-400 mb-4 bg-green-500/5 px-2.5 py-0.5 rounded-full border border-green-500/20">
+                  Digital Store
+                </span>
+                <h3 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                  Products Store <ArrowUpRight size={16} className="text-muted-foreground group-hover:text-green-400 transition-colors" />
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Download premium strategy books, operational worksheets, and checklists built to skip months of trial.
+                </p>
+              </div>
+              <div className="mt-8">
+                <Button size="xs" variant="outlineNeon" asChild className="text-[11px] h-7 px-3.5 border-green-500/30 hover:border-green-400 text-green-400 hover:bg-green-500/5">
+                  <Link to="/products">Browse Store</Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Stats */}
-        <div className="mt-10 grid grid-cols-3 gap-px bg-border/30 rounded-xl overflow-hidden border border-border/30">
-          {[
-            { value: "13+", label: "Years Experience" },
-            { value: "50+", label: "Projects Delivered" },
-            { value: "10+", label: "Tools & Frameworks" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-background/80 py-5 text-center">
-              <p className="font-display text-2xl font-bold neon-text">{stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+          {/* Box 3: Automations (Medium) */}
+          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card/45 p-8 transition-all hover:border-primary/20">
+            <div className="absolute top-0 right-0 p-8 text-cyan-500/10 pointer-events-none">
+              <Workflow size={100} />
             </div>
-          ))}
+            <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
+              <div>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-cyan-400 mb-4 bg-cyan-500/5 px-2.5 py-0.5 rounded-full border border-cyan-500/20">
+                  No-Code Blueprints
+                </span>
+                <h3 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                  Automations <ArrowUpRight size={16} className="text-muted-foreground group-hover:text-cyan-400 transition-colors" />
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Import pre-tested n8n & Make JSON scenario files that automate web scraping, leads routing, and newsletter posts.
+                </p>
+              </div>
+              <div className="mt-8">
+                <Button size="xs" variant="outlineNeon" asChild className="text-[11px] h-7 px-3.5 border-cyan-500/30 hover:border-cyan-400 text-cyan-400 hover:bg-cyan-500/5">
+                  <Link to="/automations">Get Blueprints</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Box 4: Learning Courses & Community (Large) */}
+          <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border border-border bg-card/45 p-8 transition-all hover:border-primary/20">
+            <div className="absolute top-0 right-0 p-8 text-violet-500/10 pointer-events-none">
+              <GraduationCap size={120} />
+            </div>
+            <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
+              <div>
+                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-violet-400 mb-4 bg-violet-500/5 px-2.5 py-0.5 rounded-full border border-violet-500/20">
+                  Academy & Network
+                </span>
+                <h3 className="font-display text-xl font-bold mb-3 flex items-center gap-2">
+                  LMS & Founder Feed <ArrowUpRight size={16} className="text-muted-foreground group-hover:text-violet-400 transition-colors" />
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
+                  Acquire automation building skills step-by-step through our workspace video academy, then interact with 5,000+ creators tracking streaks and co-building on the community feed.
+                </p>
+              </div>
+              <div className="mt-8 flex gap-3">
+                <Button size="xs" variant="outlineNeon" asChild className="text-[11px] h-7 px-3.5 border-violet-500/30 hover:border-violet-400 text-violet-400 hover:bg-violet-500/5">
+                  <Link to="/courses">LMS Academy</Link>
+                </Button>
+                <Button size="xs" variant="outlineNeon" asChild className="text-[11px] h-7 px-3.5 border-violet-500/30 hover:border-violet-400 text-violet-400 hover:bg-violet-500/5">
+                  <Link to="/community">Community Feed</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -282,7 +360,7 @@ function Services({ services, onBuy }: { services: any[]; onBuy: (title: string)
       <div ref={r} className="reveal mx-auto max-w-6xl px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
           <div>
-            <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Services</p>
+            <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Packages</p>
             <h2 className="font-display text-4xl md:text-5xl font-bold tracking-[-0.025em] leading-[1.08]">
               Pick your package.<br className="hidden md:block" /> Start this week.
             </h2>
@@ -302,7 +380,7 @@ function Services({ services, onBuy }: { services: any[]; onBuy: (title: string)
                 key={s.id}
                 className={`relative flex flex-col rounded-xl border transition-all duration-200 overflow-hidden ${
                   isPopular
-                    ? "service-card-featured"
+                    ? "service-card-featured border-primary/30"
                     : "bg-card/50 border-border hover:border-border/80"
                 }`}
               >
@@ -313,7 +391,7 @@ function Services({ services, onBuy }: { services: any[]; onBuy: (title: string)
                 )}
                 <div className="p-7 flex flex-col flex-1">
                   {isPopular && (
-                    <span className="absolute top-5 right-5 text-[10px] font-semibold tracking-widest uppercase text-neon border border-primary/30 rounded-full px-2.5 py-1 bg-primary/10">
+                    <span className="absolute top-5 right-5 text-[10px] font-semibold tracking-widest uppercase text-primary border border-primary/30 rounded-full px-2.5 py-1 bg-primary/10">
                       Popular
                     </span>
                   )}
@@ -376,6 +454,90 @@ function Services({ services, onBuy }: { services: any[]; onBuy: (title: string)
   );
 }
 
+/* ── LEAD CAPTURE FUNNEL ── */
+function LeadCapture() {
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const r = useReveal<HTMLDivElement>();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await submitLead({
+        first_name: firstName,
+        last_name: "Subscriber",
+        email: email,
+        phone: "",
+        help_with: "Free Ebook Download",
+        goal: "Download The Solo Founder Playbook",
+        stage: "Waitlist / Lead",
+        needs: "Subscribed via landing page Free Ebook form.",
+        best_time: "",
+      });
+      toast.success("Check your inbox! We've sent your copy of The Solo Founder Playbook.");
+      setEmail("");
+      setFirstName("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to register email. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="py-24 border-t border-border bg-card/20 relative">
+      <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+      <div ref={r} className="reveal mx-auto max-w-4xl px-6 relative z-10">
+        <div className="bg-card/40 border border-border rounded-2xl p-8 md:p-12 backdrop-blur text-center space-y-6">
+          <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+            <BookOpen size={22} className="animate-bounce" />
+          </div>
+          <div className="max-w-xl mx-auto space-y-3">
+            <h2 className="font-display text-3xl font-bold tracking-tight">
+              Get the <span className="neon-text">Solo Founder Playbook</span> (Free)
+            </h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Step-by-step blueprints, stack suggestions, checklists, and 50+ micro-niche ideas to launch your solo business and hit $10k MRR. Over 3,500 builders have downloaded it.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubscribe} className="max-w-md mx-auto grid grid-cols-1 sm:grid-cols-[1fr_1.5fr_auto] gap-3 pt-4 text-left">
+            <div>
+              <Label htmlFor="lead-name" className="sr-only">First Name</Label>
+              <Input
+                id="lead-name"
+                required
+                placeholder="First Name"
+                className="h-10 text-xs bg-muted/30"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="lead-email" className="sr-only">Email Address</Label>
+              <Input
+                id="lead-email"
+                type="email"
+                required
+                placeholder="you@email.com"
+                className="h-10 text-xs bg-muted/30"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
+            <Button type="submit" variant="hero" disabled={submitting} className="h-10 px-5 text-xs font-semibold uppercase tracking-wider">
+              {submitting ? <Loader2 size={13} className="animate-spin" /> : "Download" }
+            </Button>
+          </form>
+          <p className="text-[10px] text-muted-foreground">Zero spam. Pure leverage. Unsubscribe at any time.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ── TUTORIALS ── */
 function Tutorials({ videos }: { videos: any[] }) {
   const r = useReveal<HTMLDivElement>();
@@ -393,7 +555,7 @@ function Tutorials({ videos }: { videos: any[] }) {
             href="https://www.youtube.com/@RaviKumarAILab"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 animate-pulse"
           >
             <Youtube size={15} className="text-red-500" />
             View all on YouTube →
@@ -420,13 +582,13 @@ function Tutorials({ videos }: { videos: any[] }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {videos.map((v: any) => (
+            {videos.slice(0, 6).map((v: any) => (
               <a
                 key={v.id}
                 href={`https://youtube.com/watch?v=${v.youtube_id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="group rounded-xl border border-border bg-card/40 overflow-hidden hover:border-border/80 transition-all duration-200 flex flex-col"
+                className="group rounded-xl border border-border bg-card/40 overflow-hidden hover:border-primary/20 transition-all duration-200 flex flex-col"
               >
                 <div className="relative aspect-video overflow-hidden bg-muted">
                   <img
@@ -440,12 +602,12 @@ function Tutorials({ videos }: { videos: any[] }) {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 flex-1 flex flex-col">
+                <div className="p-4 flex-1 flex flex-col justify-between">
                   <h3 className="font-semibold text-sm leading-snug mb-2 group-hover:text-primary transition-colors line-clamp-2">
                     {v.title}
                   </h3>
                   {v.description && (
-                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{v.description}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mt-2">{v.description}</p>
                   )}
                 </div>
               </a>
@@ -466,19 +628,19 @@ function About() {
     <section id="about" className="py-24 border-t border-border">
       <div ref={r} className="reveal mx-auto max-w-6xl px-6 grid md:grid-cols-2 gap-20 items-center">
         <div>
-          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-6">About</p>
+          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-6">Founder</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-[-0.025em] leading-[1.08] mb-6">
-            I build the systems.<br className="hidden md:block" /> You run the business.
+            Meet Ravi Kumar
           </h2>
           <p className="text-muted-foreground leading-relaxed text-[15px] mb-4">
-            13+ years of full-stack engineering across startups and enterprises. Today, I focus exclusively on autonomous AI systems — connecting the right tools, whether that's a no-code n8n workflow or a fully custom agentic app.
+            13+ years of full-stack engineering across startups and digital enterprise models. Today, I build and document autonomous systems to help creators, freelancers, and builders work smarter and unlock solo business scale.
           </p>
           <p className="text-muted-foreground leading-relaxed text-[15px] mb-8">
-            I document everything I build on YouTube — real implementations, not slides.
+            Every pipeline, n8n schema, and agent layout showcased here is derived directly from client setups or public co-building workshops.
           </p>
 
           <div className="mb-8">
-            <p className="text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">Tools I work with</p>
+            <p className="text-xs font-medium tracking-[0.2em] uppercase text-muted-foreground mb-3">Favorite Stack Tools</p>
             <div className="flex flex-wrap gap-2">
               {TOOLS.map((tool) => (
                 <span key={tool} className="px-3 py-1 text-xs border border-border rounded-md text-muted-foreground bg-muted/30">
@@ -495,7 +657,7 @@ function About() {
             className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
           >
             <Youtube size={15} className="text-red-500" />
-            Ravi Kumar AI Lab on YouTube →
+            Watch Co-Builds on YouTube →
           </a>
         </div>
 
@@ -514,8 +676,8 @@ function About() {
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
           <div className="absolute bottom-5 left-6 right-6">
-            <p className="font-display text-base font-semibold">Ravi Kumar AI Lab</p>
-            <p className="text-xs text-muted-foreground mt-0.5">AI automation & agentic systems</p>
+            <p className="font-display text-base font-semibold">The Solo Entrepreneur channel</p>
+            <p className="text-xs text-muted-foreground mt-0.5">By Ravi Kumar — AI automation blueprints</p>
           </div>
         </a>
       </div>
@@ -537,12 +699,12 @@ function Schedule() {
     <section id="schedule" className="py-24 border-t border-border">
       <div ref={r} className="reveal mx-auto max-w-5xl px-6">
         <div className="mb-12">
-          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Booking</p>
+          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Calendar</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-[-0.025em] leading-[1.08]">
             Schedule a consultation.
           </h2>
           <p className="mt-4 text-muted-foreground text-[15px] max-w-lg">
-            Pick a slot that works for you. We'll talk through your stack, goals, and where automation creates the most leverage.
+            Pick an open slot. We'll map your system stack, pinpoint manual overhead, and outline where automation generates maximum yield.
           </p>
         </div>
         <div className="rounded-xl border border-border overflow-hidden bg-card/30">
@@ -564,9 +726,9 @@ function Testimonials({ testimonials }: { testimonials: any[] }) {
     <section id="testimonials" className="py-24 border-t border-border">
       <div ref={r} className="reveal mx-auto max-w-6xl px-6">
         <div className="mb-12 text-center">
-          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Testimonials</p>
+          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Proof</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-[-0.025em] leading-[1.08]">
-            What clients say.
+            What builders say.
           </h2>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -603,7 +765,7 @@ function BlogSection({ posts }: { posts: any[] }) {
     <section id="blog" className="py-24 border-t border-border">
       <div ref={r} className="reveal mx-auto max-w-6xl px-6">
         <div className="mb-12">
-          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Articles</p>
+          <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-4">Insights</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-[-0.025em] leading-[1.08]">
             Latest writing.
           </h2>

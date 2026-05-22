@@ -28,11 +28,14 @@ export const listPublicServices = createServerFn({ method: "GET" }).handler(
 
 export const listAllServices = createServerFn({ method: "GET" })
   .handler(async (): Promise<Service[]> => {
-    await requireAdminAuth();
+    console.log(`[services.functions] listAllServices called`);
+    const authUser = await requireAdminAuth();
+    console.log(`[services.functions] listAllServices authorized user:`, authUser);
     const { data, error } = await supabaseAdmin
       .from("services")
       .select("id,title,description,icon,price,image_url,sort_order,is_active")
       .order("sort_order");
+    console.log(`[services.functions] listAllServices db results:`, { dataCount: data?.length, error });
     if (error) throw new Error(error.message);
     return (data ?? []) as Service[];
   });

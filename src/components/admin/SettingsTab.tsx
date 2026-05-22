@@ -32,7 +32,7 @@ export function SettingsTab() {
   };
 
   const save = useMutation({
-    mutationFn: () => saveSettings({ data: form }),
+    mutationFn: () => saveSettings(form),
     onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["settings"] }); setDirty(false); },
     onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
   });

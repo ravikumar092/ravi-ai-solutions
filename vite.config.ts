@@ -23,12 +23,14 @@ function browserStubStorageContext(): Plugin {
 }
 
 function browserStubNodeModules(): Plugin {
-  const NODE_ONLY = ["pg", "pg-native", "pg-pool", "pg-types", "postgres-bytea", "postgres-date", "postgres-interval"];
+  const NODE_ONLY = ["pg", "pg-native", "pg-pool", "pg-types", "postgres-bytea", "postgres-date", "postgres-interval", "ws"];
   return {
     name: "browser-stub-node-modules",
     enforce: "pre",
-    resolveId(source, _importer, options) {
-      if (!options?.ssr && NODE_ONLY.some((m) => source === m || source.startsWith(m + "/"))) {
+    resolveId(source, _importer, _options) {
+      // Stub pg for ALL environments (browser and SSR worker) since we use
+      // in-memory sessions — no actual Postgres connection is needed.
+      if (NODE_ONLY.some((m) => source === m || source.startsWith(m + "/"))) {
         return "\0browser-stub:" + source;
       }
       return null;
@@ -55,6 +57,9 @@ export default defineConfig({
       port: 5000,
       strictPort: true,
       allowedHosts: true,
+      watch: {
+        ignored: ["**/.local/**"],
+      },
     },
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ""),

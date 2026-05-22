@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border mt-24">
       <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} Ravi Kumar AI Lab. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} The Solo Entrepreneur (by Ravi Kumar). All rights reserved.</p>
         <div className="flex items-center gap-6">
           <a
             href="https://www.youtube.com/@RaviKumarAILab"

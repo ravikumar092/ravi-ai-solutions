@@ -26,32 +26,28 @@ export function Header() {
         }`}
       >
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="font-display text-base font-semibold tracking-tight">
-            <span className="neon-text">Ravi Kumar</span>
-            <span className="text-foreground"> AI Lab</span>
+          <Link to="/" className="font-display text-base font-semibold tracking-tight flex items-center gap-2">
+            <span className="neon-text font-bold">The Solo</span>
+            <span className="text-foreground font-bold">Entrepreneur</span>
+            <span className="text-[9px] bg-muted border border-border px-1.5 py-0.5 rounded text-muted-foreground font-sans font-normal uppercase tracking-wider hidden sm:inline-block">by Ravi Kumar</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <a href="#services" className="hover:text-foreground transition">Services</a>
-            <a href="#tutorials" className="hover:text-foreground transition">Tutorials</a>
-            <a href="#about" className="hover:text-foreground transition">About</a>
-            <a href="#schedule" className="hover:text-foreground transition">Schedule</a>
-            <a
-              href="https://www.youtube.com/@RaviKumarAILab"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-foreground transition"
-            >
-              YouTube
-            </a>
+          <nav className="hidden xl:flex items-center gap-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <Link to="/" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Home</Link>
+            <Link to="/tools" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Tools</Link>
+            <Link to="/products" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Store</Link>
+            <Link to="/automations" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Automations</Link>
+            <Link to="/courses" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Courses</Link>
+            <Link to="/community" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Community</Link>
+            <Link to="/dashboard" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Dashboard</Link>
           </nav>
 
-          <div className="hidden md:block">
-            <Button variant="hero" onClick={() => setModal(true)}>Book a Call</Button>
+          <div className="hidden xl:block">
+            <Button variant="hero" onClick={() => setModal(true)} className="text-xs uppercase tracking-wider px-4 py-1.5 h-8">Book a Call</Button>
           </div>
 
           <button
-            className="md:hidden text-foreground"
+            className="xl:hidden text-foreground"
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle menu"
           >
@@ -60,14 +56,16 @@ export function Header() {
         </div>
 
         {open && (
-          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
-            <nav className="px-6 py-4 flex flex-col gap-4 text-sm">
-              <a href="#services" onClick={() => setOpen(false)}>Services</a>
-              <a href="#tutorials" onClick={() => setOpen(false)}>Tutorials</a>
-              <a href="#about" onClick={() => setOpen(false)}>About</a>
-              <a href="#schedule" onClick={() => setOpen(false)}>Schedule</a>
-              <a href="https://www.youtube.com/@RaviKumarAILab" target="_blank" rel="noreferrer">YouTube</a>
-              <Button variant="hero" onClick={() => { setModal(true); setOpen(false); }}>
+          <div className="xl:hidden border-t border-border bg-background/95 backdrop-blur-xl">
+            <nav className="px-6 py-4 flex flex-col gap-4 text-sm font-medium uppercase tracking-wider">
+              <Link to="/" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Home</Link>
+              <Link to="/tools" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Tools</Link>
+              <Link to="/products" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Store</Link>
+              <Link to="/automations" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Automations</Link>
+              <Link to="/courses" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Courses</Link>
+              <Link to="/community" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Community</Link>
+              <Link to="/dashboard" onClick={() => setOpen(false)} activeProps={{ className: "text-foreground font-semibold neon-text" }}>Dashboard</Link>
+              <Button variant="hero" onClick={() => { setModal(true); setOpen(false); }} className="text-xs uppercase tracking-wider w-full mt-2">
                 Book a Call
               </Button>
             </nav>

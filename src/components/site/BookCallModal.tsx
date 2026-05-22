@@ -61,7 +61,7 @@ export function BookCallModal({
     e.preventDefault();
     setLoading(true);
     try {
-      await submit({ data: form });
+      await submit(form);
       toast.success("Request received — I'll be in touch shortly.");
       onOpenChange(false);
     } catch (err: any) {
