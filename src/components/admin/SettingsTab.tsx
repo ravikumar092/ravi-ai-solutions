@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Save, Mail, ExternalLink, Bell, AlertTriangle } from "lucide-react";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { getSettings, updateSettings } from "@/lib/settings.functions";
 
 export function SettingsTab() {
@@ -22,7 +23,7 @@ export function SettingsTab() {
     if (data) { setForm(data as any); setDirty(false); }
   }, [data]);
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
     setDirty(true);
   };
@@ -31,11 +32,33 @@ export function SettingsTab() {
     setDirty(true);
   };
 
+  const isValidUrl = (url: string) => {
+    if (!url) return true;
+    try {
+      new URL(url);
+      return url.startsWith("http://") || url.startsWith("https://");
+    } catch {
+      return false;
+    }
+  };
+
   const save = useMutation({
-    mutationFn: () => saveSettings({ data: form }),
+    mutationFn: () => saveSettings(form),
     onSuccess: () => { toast.success("Settings saved"); qc.invalidateQueries({ queryKey: ["settings"] }); setDirty(false); },
     onError: (e: any) => toast.error(e?.message ?? "Failed to save"),
   });
+
+  const handleSave = () => {
+    if (form.calendly_url && !isValidUrl(form.calendly_url)) {
+      toast.error("Please enter a valid Calendly booking URL starting with http:// or https://");
+      return;
+    }
+    if (form.youtube_url && !isValidUrl(form.youtube_url)) {
+      toast.error("Please enter a valid YouTube channel URL starting with http:// or https://");
+      return;
+    }
+    save.mutate();
+  };
 
   if (isLoading) return <div className="text-sm text-muted-foreground animate-pulse">Loading settings…</div>;
 
@@ -50,7 +73,7 @@ export function SettingsTab() {
           <p className="text-sm text-muted-foreground">Control key URLs and behaviour without editing code.</p>
         </div>
         {dirty && (
-          <Button variant="hero" onClick={() => save.mutate()} disabled={save.isPending} className="gap-2">
+          <Button variant="hero" onClick={handleSave} disabled={save.isPending} className="gap-2">
             <Save size={14} /> {save.isPending ? "Saving…" : "Save changes"}
           </Button>
         )}
@@ -113,13 +136,81 @@ export function SettingsTab() {
 
       {/* Content */}
       <Section title="Content" description="Text shown across the public site.">
+        <Field label="Site / Brand Name">
+          <Input value={form.site_name ?? ""} onChange={set("site_name")} placeholder="Ravi Kumar AI Lab" />
+          <p className="text-[11px] text-muted-foreground mt-1">Updates the website logo, copyrights, and browser tab titles.</p>
+        </Field>
+        <Field label="Hero Headline">
+          <Input value={form.hero_headline ?? ""} onChange={set("hero_headline")} placeholder="Build autonomous systems that work while you sleep." />
+          <p className="text-[11px] text-muted-foreground mt-1">Main heading displayed in the hero section.</p>
+        </Field>
         <Field label="Hero tagline">
           <Input value={form.hero_tagline ?? ""} onChange={set("hero_tagline")} placeholder="One-liner describing what you do…" />
-          <p className="text-[11px] text-muted-foreground mt-1">Shown below the main headline on the homepage. (Requires page reload to reflect.)</p>
+          <p className="text-[11px] text-muted-foreground mt-1">Shown below the main headline on the homepage.</p>
+        </Field>
+        <Field label="SEO Meta Description">
+          <Textarea value={form.meta_description ?? ""} onChange={set("meta_description")} placeholder="Metadata description for search engines..." rows={2} className="bg-background" />
+          <p className="text-[11px] text-muted-foreground mt-1">Main description for SEO purposes.</p>
+        </Field>
+        <Field label="Founder Name">
+          <Input value={form.founder_name ?? ""} onChange={set("founder_name")} placeholder="Ravi Kumar" />
+          <p className="text-[11px] text-muted-foreground mt-1">Your name displayed in the About and Meet sections.</p>
+        </Field>
+        <Field label="Founder Bio">
+          <Textarea value={form.founder_bio ?? ""} onChange={set("founder_bio")} placeholder="Founder bio and credentials..." rows={3} className="bg-background" />
+          <p className="text-[11px] text-muted-foreground mt-1">Detailed description of your expertise and mission.</p>
         </Field>
         <Field label="Public contact email">
           <Input type="email" value={form.contact_email ?? ""} onChange={set("contact_email")} placeholder="hello@yourdomain.com" />
         </Field>
+
+        <div className="pt-4 border-t border-border/60">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Lead Magnet / Ebook</h4>
+          <div className="space-y-4">
+            <Field label="Ebook Title">
+              <Input value={form.ebook_title ?? ""} onChange={set("ebook_title")} placeholder="Ravi Kumar AI Lab Playbook" />
+            </Field>
+            <Field label="Ebook Description">
+              <Textarea value={form.ebook_desc ?? ""} onChange={set("ebook_desc")} placeholder="Description of the ebook and its contents..." rows={3} className="bg-background" />
+            </Field>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-border/60">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Tools Hub</h4>
+          <div className="space-y-4">
+            <Field label="Tools Page Headline">
+              <Input value={form.tools_title ?? ""} onChange={set("tools_title")} placeholder="AI-First Solopreneur Tools" />
+            </Field>
+            <Field label="Tools Page Subtitle">
+              <Textarea value={form.tools_desc ?? ""} onChange={set("tools_desc")} placeholder="Brief details about the tools..." rows={2} className="bg-background" />
+            </Field>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-border/60">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Learning Platform / Academy</h4>
+          <div className="space-y-4">
+            <Field label="Courses Page Headline">
+              <Input value={form.courses_title ?? ""} onChange={set("courses_title")} placeholder="Ravi Kumar AI Lab Learning Platform" />
+            </Field>
+            <Field label="Courses Page Subtitle">
+              <Textarea value={form.courses_desc ?? ""} onChange={set("courses_desc")} placeholder="Brief details about the academy..." rows={2} className="bg-background" />
+            </Field>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-border/60">
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Community Feed</h4>
+          <div className="space-y-4">
+            <Field label="Community Page Headline">
+              <Input value={form.community_title ?? ""} onChange={set("community_title")} placeholder="Founder Community Feed" />
+            </Field>
+            <Field label="Community Page Subtitle">
+              <Textarea value={form.community_desc ?? ""} onChange={set("community_desc")} placeholder="Brief details about the community..." rows={2} className="bg-background" />
+            </Field>
+          </div>
+        </div>
       </Section>
 
       {dirty && (

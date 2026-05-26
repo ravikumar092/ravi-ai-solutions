@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useState, useCallback, useEffect } from "react";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import {
   Plus, Pencil, Trash2, Globe, FileText, EyeOff,
   Bold, Italic, Heading2, Heading3, List, ListOrdered,
-  Code, Quote, Minus, Link as LinkIcon, Undo, Redo, Eye,
+  Code, Quote, Minus, Link as LinkIcon, Undo, Redo, Eye, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,21 @@ export function BlogTab() {
   const remove = useServerFn(deletePost);
   const qc = useQueryClient();
 
-  const { data = [], isLoading } = useQuery({ queryKey: ["admin-blog"], queryFn: () => fetchAll() });
+  const { data = [], isLoading, error, isError } = useQuery({ 
+    queryKey: ["admin-blog"], 
+    queryFn: () => fetchAll() 
+  });
   const [editing, setEditing] = useState<any | null>(null);
 
+  useEffect(() => {
+    if (isError) {
+      console.error("admin-blog query error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load blog posts");
+    }
+  }, [isError, error]);
+
   const save = useMutation({
-    mutationFn: (v: any) => upsert({ data: v }),
+    mutationFn: (v: any) => upsert(v),
     onSuccess: () => {
       toast.success("Post saved");
       qc.invalidateQueries({ queryKey: ["admin-blog"] });
@@ -39,7 +49,7 @@ export function BlogTab() {
   });
 
   const del = useMutation({
-    mutationFn: (id: string) => remove({ data: { id } }),
+    mutationFn: (id: string) => remove({ id }),
     onSuccess: () => {
       toast.success("Deleted");
       qc.invalidateQueries({ queryKey: ["admin-blog"] });
@@ -71,7 +81,17 @@ export function BlogTab() {
           <div key={i} className="h-20 rounded-lg bg-card/50 animate-pulse" />
         ))}
 
-        {data.length === 0 && !isLoading && (
+        {isError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive animate-fade-in">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-medium mb-1">Failed to load blog posts</p>
+              <p className="opacity-80">{(error as any)?.message ?? "An error occurred"}</p>
+            </div>
+          </div>
+        )}
+
+        {data.length === 0 && !isLoading && !isError && (
           <div className="rounded-xl border border-dashed border-border p-10 text-center">
             <FileText size={28} className="text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No posts yet. Write your first article.</p>

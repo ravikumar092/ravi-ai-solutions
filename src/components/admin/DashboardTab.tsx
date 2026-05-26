@@ -1,7 +1,9 @@
-import { useServerFn } from "@tanstack/react-start";
+import { useEffect } from "react";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Users, LayoutGrid, Youtube, TrendingUp, MessageSquare, FileText, HelpCircle, ArrowRight, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { Users, LayoutGrid, Youtube, TrendingUp, MessageSquare, FileText, HelpCircle, ArrowRight, Clock, AlertCircle } from "lucide-react";
 import { listLeads } from "@/lib/leads.functions";
 import { listAllServices } from "@/lib/services.functions";
 import { listAllVideos } from "@/lib/videos.functions";
@@ -18,10 +20,31 @@ export function DashboardTab({ onNav }: { onNav: (section: string) => void }) {
   const fetchServices = useServerFn(listAllServices);
   const fetchVideos = useServerFn(listAllVideos);
 
-  const { data: leads = [] } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
-  const { data: services = [] } = useQuery({ queryKey: ["admin-services"], queryFn: () => fetchServices() });
-  const { data: videosResult } = useQuery({ queryKey: ["admin-videos"], queryFn: () => fetchVideos() });
+  const { data: leads = [], error: leadsErr, isError: leadsIsErr } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
+  const { data: services = [], error: servicesErr, isError: servicesIsErr } = useQuery({ queryKey: ["admin-services"], queryFn: () => fetchServices() });
+  const { data: videosResult, error: videosErr, isError: videosIsErr } = useQuery({ queryKey: ["admin-videos"], queryFn: () => fetchVideos() });
   const videos = videosResult?.videos ?? [];
+
+  useEffect(() => {
+    if (leadsIsErr) {
+      console.error("Dashboard leads load error:", leadsErr);
+      toast.error(leadsErr instanceof Error ? leadsErr.message : "Failed to load dashboard leads");
+    }
+  }, [leadsIsErr, leadsErr]);
+
+  useEffect(() => {
+    if (servicesIsErr) {
+      console.error("Dashboard services load error:", servicesErr);
+      toast.error(servicesErr instanceof Error ? servicesErr.message : "Failed to load dashboard services");
+    }
+  }, [servicesIsErr, servicesErr]);
+
+  useEffect(() => {
+    if (videosIsErr) {
+      console.error("Dashboard videos load error:", videosErr);
+      toast.error(videosErr instanceof Error ? videosErr.message : "Failed to load dashboard videos");
+    }
+  }, [videosIsErr, videosErr]);
 
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -45,12 +68,25 @@ export function DashboardTab({ onNav }: { onNav: (section: string) => void }) {
     { label: "View analytics", icon: TrendingUp, section: "analytics" },
   ];
 
+  const anyError = leadsIsErr || servicesIsErr || videosIsErr;
+  const firstErrorMessage = (leadsErr as any)?.message || (servicesErr as any)?.message || (videosErr as any)?.message || "Unauthorized or database connection error";
+
   return (
     <div className="space-y-8">
       <div>
         <h2 className="font-display text-2xl font-bold mb-1">Dashboard</h2>
         <p className="text-sm text-muted-foreground">Welcome back. Here's what's happening.</p>
       </div>
+
+      {anyError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">
+          <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <p className="font-medium mb-1">Some dashboard data failed to load</p>
+            <p className="opacity-80">{firstErrorMessage}</p>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,12 +1,18 @@
-import pg from 'pg';
-
-const { Pool } = pg;
-
 let initialized = false;
 
 export async function initDb() {
   if (initialized) return;
   initialized = true;
+
+  if (!process.env.DATABASE_URL) {
+    console.log('[db-init] DATABASE_URL not set. Skipping DB tables initialization.');
+    return;
+  }
+
+  // Dynamically import pg only when DATABASE_URL is configured, to avoid
+  // crashing the Cloudflare workerd module runner when pg is not needed.
+  const pg = await import('pg');
+  const { Pool } = pg.default ?? pg;
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   try {

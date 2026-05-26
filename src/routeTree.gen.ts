@@ -9,18 +9,67 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ToolsRouteImport } from './routes/tools'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as ProductsRouteImport } from './routes/products'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as CommunityRouteImport } from './routes/community'
+import { Route as AutomationsRouteImport } from './routes/automations'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PurchasesPurchaseIdRouteImport } from './routes/purchases.$purchaseId'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as ApiMeRouteImport } from './routes/api/me'
 import { Route as ApiLogoutRouteImport } from './routes/api/logout'
 import { Route as ApiLoginRouteImport } from './routes/api/login'
 import { Route as ApiCallbackRouteImport } from './routes/api/callback'
 
+const ToolsRoute = ToolsRouteImport.update({
+  id: '/tools',
+  path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AutomationsRoute = AutomationsRouteImport.update({
+  id: '/automations',
+  path: '/automations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -31,6 +80,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PurchasesPurchaseIdRoute = PurchasesPurchaseIdRouteImport.update({
+  id: '/purchases/$purchaseId',
+  path: '/purchases/$purchaseId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
@@ -62,85 +116,204 @@ const ApiCallbackRoute = ApiCallbackRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/automations': typeof AutomationsRoute
+  '/community': typeof CommunityRoute
+  '/courses': typeof CoursesRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/products': typeof ProductsRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/tools': typeof ToolsRoute
   '/api/callback': typeof ApiCallbackRoute
   '/api/login': typeof ApiLoginRoute
   '/api/logout': typeof ApiLogoutRoute
   '/api/me': typeof ApiMeRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/purchases/$purchaseId': typeof PurchasesPurchaseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/automations': typeof AutomationsRoute
+  '/community': typeof CommunityRoute
+  '/courses': typeof CoursesRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/products': typeof ProductsRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/tools': typeof ToolsRoute
   '/api/callback': typeof ApiCallbackRoute
   '/api/login': typeof ApiLoginRoute
   '/api/logout': typeof ApiLogoutRoute
   '/api/me': typeof ApiMeRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/purchases/$purchaseId': typeof PurchasesPurchaseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/automations': typeof AutomationsRoute
+  '/community': typeof CommunityRoute
+  '/courses': typeof CoursesRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/products': typeof ProductsRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
+  '/tools': typeof ToolsRoute
   '/api/callback': typeof ApiCallbackRoute
   '/api/login': typeof ApiLoginRoute
   '/api/logout': typeof ApiLogoutRoute
   '/api/me': typeof ApiMeRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/purchases/$purchaseId': typeof PurchasesPurchaseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin'
+    | '/automations'
+    | '/community'
+    | '/courses'
+    | '/dashboard'
     | '/login'
+    | '/products'
+    | '/signin'
+    | '/signup'
+    | '/tools'
     | '/api/callback'
     | '/api/login'
     | '/api/logout'
     | '/api/me'
     | '/blog/$slug'
+    | '/purchases/$purchaseId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/automations'
+    | '/community'
+    | '/courses'
+    | '/dashboard'
     | '/login'
+    | '/products'
+    | '/signin'
+    | '/signup'
+    | '/tools'
     | '/api/callback'
     | '/api/login'
     | '/api/logout'
     | '/api/me'
     | '/blog/$slug'
+    | '/purchases/$purchaseId'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/automations'
+    | '/community'
+    | '/courses'
+    | '/dashboard'
     | '/login'
+    | '/products'
+    | '/signin'
+    | '/signup'
+    | '/tools'
     | '/api/callback'
     | '/api/login'
     | '/api/logout'
     | '/api/me'
     | '/blog/$slug'
+    | '/purchases/$purchaseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AutomationsRoute: typeof AutomationsRoute
+  CommunityRoute: typeof CommunityRoute
+  CoursesRoute: typeof CoursesRoute
+  DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  ProductsRoute: typeof ProductsRoute
+  SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
+  ToolsRoute: typeof ToolsRoute
   ApiCallbackRoute: typeof ApiCallbackRoute
   ApiLoginRoute: typeof ApiLoginRoute
   ApiLogoutRoute: typeof ApiLogoutRoute
   ApiMeRoute: typeof ApiMeRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  PurchasesPurchaseIdRoute: typeof PurchasesPurchaseIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tools': {
+      id: '/tools'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof ToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/automations': {
+      id: '/automations'
+      path: '/automations'
+      fullPath: '/automations'
+      preLoaderRoute: typeof AutomationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -155,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchases/$purchaseId': {
+      id: '/purchases/$purchaseId'
+      path: '/purchases/$purchaseId'
+      fullPath: '/purchases/$purchaseId'
+      preLoaderRoute: typeof PurchasesPurchaseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog/$slug': {
@@ -198,12 +378,21 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AutomationsRoute: AutomationsRoute,
+  CommunityRoute: CommunityRoute,
+  CoursesRoute: CoursesRoute,
+  DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  ProductsRoute: ProductsRoute,
+  SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
+  ToolsRoute: ToolsRoute,
   ApiCallbackRoute: ApiCallbackRoute,
   ApiLoginRoute: ApiLoginRoute,
   ApiLogoutRoute: ApiLogoutRoute,
   ApiMeRoute: ApiMeRoute,
   BlogSlugRoute: BlogSlugRoute,
+  PurchasesPurchaseIdRoute: PurchasesPurchaseIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

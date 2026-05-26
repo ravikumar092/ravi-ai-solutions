@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useState, useEffect } from "react";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,18 +17,28 @@ export function VideosAdmin() {
   const remove = useServerFn(deleteVideo);
   const qc = useQueryClient();
 
-  const { data: result, isLoading } = useQuery({ queryKey: ["admin-videos"], queryFn: () => fetchAll() });
+  const { data: result, isLoading, error, isError } = useQuery({ 
+    queryKey: ["admin-videos"], 
+    queryFn: () => fetchAll() 
+  });
   const videos = result?.videos ?? [];
   const tableMissing = result?.tableMissing ?? false;
   const [editing, setEditing] = useState<any | null>(null);
 
+  useEffect(() => {
+    if (isError) {
+      console.error("admin-videos query error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load videos");
+    }
+  }, [isError, error]);
+
   const save = useMutation({
-    mutationFn: (v: any) => upsert({ data: v }),
+    mutationFn: (v: any) => upsert(v),
     onSuccess: () => { toast.success("Video saved"); qc.invalidateQueries({ queryKey: ["admin-videos"] }); qc.invalidateQueries({ queryKey: ["public-videos"] }); setEditing(null); },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
   const del = useMutation({
-    mutationFn: (id: string) => remove({ data: { id } }),
+    mutationFn: (id: string) => remove({ id }),
     onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-videos"] }); qc.invalidateQueries({ queryKey: ["public-videos"] }); },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
@@ -54,7 +64,16 @@ export function VideosAdmin() {
         )}
 
         {isLoading && [1,2].map(i => <div key={i} className="h-24 rounded-lg bg-card/50 animate-pulse" />)}
-        {!isLoading && !tableMissing && videos.length === 0 && (
+        {isError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-medium mb-1">Failed to load videos</p>
+              <p className="opacity-80">{(error as any)?.message ?? "An error occurred"}</p>
+            </div>
+          </div>
+        )}
+        {!isLoading && !isError && !tableMissing && videos.length === 0 && (
           <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">No videos yet. Add your YouTube tutorial IDs.</div>
         )}
 

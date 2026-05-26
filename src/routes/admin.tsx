@@ -3,7 +3,8 @@ import { createFileRoute, useNavigate, Link, redirect } from "@tanstack/react-ro
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, LayoutGrid, Youtube, Users, MessageSquare,
-  FileText, HelpCircle, Settings, TrendingUp, LogOut, Menu, X,
+  FileText, HelpCircle, Settings, TrendingUp, LogOut, Menu, X, ShoppingBag,
+  Cpu, BookOpen, MessageCircle, CreditCard
 } from "lucide-react";
 import { DashboardTab } from "@/components/admin/DashboardTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
@@ -14,6 +15,11 @@ import { SettingsTab } from "@/components/admin/SettingsTab";
 import { LeadsTab } from "@/components/admin/LeadsTab";
 import { ServicesAdmin } from "@/components/admin/ServicesTab";
 import { VideosAdmin } from "@/components/admin/VideosTab";
+import { ProductsAdmin } from "@/components/admin/ProductsTab";
+import { AutomationsTab } from "@/components/admin/AutomationsTab";
+import { CoursesTab } from "@/components/admin/CoursesTab";
+import { CommunityTab } from "@/components/admin/CommunityTab";
+import { PurchasesTab } from "@/components/admin/PurchasesTab";
 import { getMe } from "@/routes/api/me";
 
 export const Route = createFileRoute("/admin")({
@@ -30,13 +36,19 @@ export const Route = createFileRoute("/admin")({
 
 type Section =
   | "dashboard" | "services" | "videos" | "testimonials"
-  | "blog" | "faqs" | "leads" | "settings" | "analytics";
+  | "blog" | "faqs" | "leads" | "settings" | "analytics" | "products"
+  | "automations" | "courses" | "community" | "purchases";
 
 const NAV: { id: Section; label: string; icon: any }[] = [
   { id: "dashboard",    label: "Dashboard",    icon: LayoutDashboard },
   { id: "leads",        label: "Leads",        icon: Users },
   { id: "analytics",   label: "Analytics",    icon: TrendingUp },
   { id: "services",    label: "Services",     icon: LayoutGrid },
+  { id: "products",    label: "Products",     icon: ShoppingBag },
+  { id: "automations",  label: "Automations",  icon: Cpu },
+  { id: "courses",      label: "Courses",      icon: BookOpen },
+  { id: "community",    label: "Community",    icon: MessageCircle },
+  { id: "purchases",    label: "Purchases",    icon: CreditCard },
   { id: "videos",      label: "Videos",       icon: Youtube },
   { id: "testimonials",label: "Testimonials", icon: MessageSquare },
   { id: "blog",        label: "Blog",         icon: FileText },
@@ -122,6 +134,11 @@ function AdminPage() {
           {section === "leads"        && <LeadsTab />}
           {section === "settings"     && <SettingsTab />}
           {section === "analytics"    && <AnalyticsTab />}
+          {section === "products"     && <ProductsAdmin />}
+          {section === "automations"  && <AutomationsTab />}
+          {section === "courses"      && <CoursesTab />}
+          {section === "community"    && <CommunityTab />}
+          {section === "purchases"    && <PurchasesTab />}
         </main>
       </div>
     </div>

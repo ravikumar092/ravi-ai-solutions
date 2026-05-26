@@ -10,6 +10,19 @@ export type SiteSettings = {
   notification_enabled: string;
   hero_tagline: string;
   contact_email: string;
+  site_name: string;
+  hero_headline: string;
+  founder_name: string;
+  founder_bio: string;
+  meta_description: string;
+  tools_title: string;
+  tools_desc: string;
+  courses_title: string;
+  courses_desc: string;
+  community_title: string;
+  community_desc: string;
+  ebook_title: string;
+  ebook_desc: string;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -20,6 +33,19 @@ const DEFAULTS: SiteSettings = {
   hero_tagline:
     "I design and ship AI workflows, agentic pipelines, and custom automation using n8n, Make, LangChain, CrewAI, and more — tailored to your business.",
   contact_email: "",
+  site_name: "Ravi Kumar AI Lab",
+  hero_headline: "Build autonomous systems that work while you sleep.",
+  founder_name: "Ravi Kumar",
+  founder_bio: "13+ years of full-stack engineering across startups and digital enterprise models. Today, I build and document autonomous systems to help creators, freelancers, and builders work smarter and unlock solo business scale.",
+  meta_description: "The ultimate builder platform, AI tools, cloneable workflows, courses, and accountability community for solo founders, creators, and indie hackers by Ravi Kumar.",
+  tools_title: "AI-First Solopreneur Tools",
+  tools_desc: "Free high-utility calculators and mockup validation streams to speed up your ideation, pricing, and system architectures.",
+  courses_title: "Ravi Kumar AI Lab Learning Platform",
+  courses_desc: "Unlock actionable, no-nonsense tutorials. Learn how to construct self-healing systems and scale your earnings as a solo builder.",
+  community_title: "Founder Community Feed",
+  community_desc: "Collaborate, ask questions, and share automation milestones with 2,000+ builders building in public.",
+  ebook_title: "Ravi Kumar AI Lab Playbook",
+  ebook_desc: "Step-by-step blueprints, stack suggestions, checklists, and 50+ micro-niche ideas to launch your solo business and hit $10k MRR. Over 3,500 builders have downloaded it.",
 };
 
 export const getSettings = createServerFn({ method: "GET" }).handler(
@@ -40,10 +66,19 @@ export const getSettings = createServerFn({ method: "GET" }).handler(
 );
 
 export const updateSettings = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
-    z.record(z.string(), z.string()).parse(d)
-  )
+  .inputValidator((d: unknown) => {
+    console.log("[settings.functions] updateSettings validator received:", d);
+    try {
+      const parsed = z.record(z.string(), z.string()).parse(d);
+      console.log("[settings.functions] updateSettings validator success:", parsed);
+      return parsed;
+    } catch (e: any) {
+      console.error("[settings.functions] updateSettings validator error:", e);
+      throw e;
+    }
+  })
   .handler(async ({ data }) => {
+    console.log("[settings.functions] updateSettings handler received:", data);
     await requireAdminAuth();
     const upserts = Object.entries(data).map(([key, value]) => ({
       key,

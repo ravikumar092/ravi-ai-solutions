@@ -1,13 +1,13 @@
-import { useState, useMemo } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useState, useMemo, useEffect } from "react";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2, Download, Search, Filter, ChevronDown, ChevronUp, Send, X } from "lucide-react";
+import { Trash2, Download, Search, Filter, ChevronDown, ChevronUp, Send, X, AlertCircle, Plus, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { listLeads, updateLeadStatus, updateLeadNotes, deleteLead, exportLeadsCSV, replyToLead } from "@/lib/leads.functions";
+import { listLeads, updateLeadStatus, updateLeadNotes, deleteLead, exportLeadsCSV, replyToLead, adminCreateLead, adminUpdateLead } from "@/lib/leads.functions";
 
 const STATUS_STYLES: Record<string, string> = {
   new: "bg-primary/15 text-primary border-primary/20",
@@ -23,9 +23,18 @@ export function LeadsTab() {
   const removeLeads = useServerFn(deleteLead);
   const exportCSV = useServerFn(exportLeadsCSV);
   const sendReply = useServerFn(replyToLead);
+  const createLead = useServerFn(adminCreateLead);
+  const updateLead = useServerFn(adminUpdateLead);
   const qc = useQueryClient();
 
-  const { data: leads = [], isLoading } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
+  const { data: leads = [], isLoading, error, isError } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
+
+  useEffect(() => {
+    if (isError) {
+      console.error("admin-leads query error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load leads");
+    }
+  }, [isError, error]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -33,6 +42,36 @@ export function LeadsTab() {
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [replyState, setReplyState] = useState<{ id: string; email: string; name: string } | null>(null);
   const [replyForm, setReplyForm] = useState({ subject: "", body: "" });
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    help_with: "",
+    goal: "",
+    stage: "",
+    needs: "",
+    best_time: "",
+    status: "new" as "new" | "contacted" | "won" | "lost",
+    notes: "",
+  });
+
+  const [editState, setEditState] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    help_with: "",
+    goal: "",
+    stage: "",
+    needs: "",
+    best_time: "",
+    status: "new" as "new" | "contacted" | "won" | "lost",
+    notes: "",
+  });
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -51,23 +90,23 @@ export function LeadsTab() {
   }, [leads]);
 
   const setStatus = useMutation({
-    mutationFn: (v: { id: string; status: any }) => updateStatus({ data: v }),
+    mutationFn: (v: { id: string; status: any }) => updateStatus(v),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-leads"] }),
   });
 
   const saveNotes = useMutation({
-    mutationFn: (v: { id: string; notes: string }) => updateNotes({ data: v }),
+    mutationFn: (v: { id: string; notes: string }) => updateNotes(v),
     onSuccess: () => { toast.success("Notes saved"); qc.invalidateQueries({ queryKey: ["admin-leads"] }); },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
 
   const del = useMutation({
-    mutationFn: (id: string) => removeLeads({ data: { id } }),
+    mutationFn: (id: string) => removeLeads({ id }),
     onSuccess: () => { toast.success("Lead deleted"); qc.invalidateQueries({ queryKey: ["admin-leads"] }); },
   });
 
   const reply = useMutation({
-    mutationFn: (v: any) => sendReply({ data: v }),
+    mutationFn: (v: any) => sendReply(v),
     onSuccess: () => {
       toast.success("Reply sent and lead marked as contacted");
       setReplyState(null);
@@ -75,6 +114,39 @@ export function LeadsTab() {
       qc.invalidateQueries({ queryKey: ["admin-leads"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Failed to send — check Resend API key in Settings"),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (v: any) => createLead(v),
+    onSuccess: () => {
+      toast.success("Lead created successfully");
+      setCreateOpen(false);
+      setCreateForm({
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone: "",
+        help_with: "",
+        goal: "",
+        stage: "",
+        needs: "",
+        best_time: "",
+        status: "new",
+        notes: "",
+      });
+      qc.invalidateQueries({ queryKey: ["admin-leads"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to create lead"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (v: { id: string; data: any }) => updateLead({ id: v.id, ...v.data }),
+    onSuccess: () => {
+      toast.success("Lead updated successfully");
+      setEditState(null);
+      qc.invalidateQueries({ queryKey: ["admin-leads"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to update lead"),
   });
 
   const handleExport = async () => {
@@ -134,6 +206,9 @@ export function LeadsTab() {
             <option value="won">Won</option>
             <option value="lost">Lost</option>
           </select>
+          <Button size="sm" variant="outlineNeon" className="h-9 gap-1.5 text-xs" onClick={() => setCreateOpen(true)}>
+            <Plus size={13} /> Add Contact
+          </Button>
           <Button size="sm" variant="outlineNeon" className="h-9 gap-1.5 text-xs" onClick={handleExport}>
             <Download size={13} /> Export CSV
           </Button>
@@ -178,10 +253,267 @@ export function LeadsTab() {
         </div>
       )}
 
+      {/* Create Lead Modal */}
+      {createOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg text-foreground">Add New Contact</h3>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setCreateOpen(false)}><X size={13} /></Button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!createForm.first_name.trim() || !createForm.last_name.trim() || !createForm.email.trim()) {
+                toast.error("First Name, Last Name, and Email are required");
+                return;
+              }
+              createMutation.mutate(createForm);
+            }} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">First Name <span className="text-red-500">*</span></label>
+                  <Input required placeholder="First Name" value={createForm.first_name} onChange={e => setCreateForm(f => ({...f, first_name: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Last Name <span className="text-red-500">*</span></label>
+                  <Input required placeholder="Last Name" value={createForm.last_name} onChange={e => setCreateForm(f => ({...f, last_name: e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Email <span className="text-red-500">*</span></label>
+                  <Input required type="email" placeholder="email@example.com" value={createForm.email} onChange={e => setCreateForm(f => ({...f, email: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Phone</label>
+                  <Input placeholder="Phone Number" value={createForm.phone} onChange={e => setCreateForm(f => ({...f, phone: e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5 flex flex-col">
+                  <label className="text-xs text-muted-foreground font-medium mb-1.5">I need help with...</label>
+                  <select
+                    value={createForm.help_with}
+                    onChange={e => setCreateForm(f => ({...f, help_with: e.target.value}))}
+                    className="w-full bg-muted border border-border rounded-md px-3 h-9 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Select help option...</option>
+                    <option value="1-on-1 Coaching Session ($49)">1-on-1 Coaching Session ($49)</option>
+                    <option value="Live Workshop ($29)">Live Workshop ($29)</option>
+                    <option value="AI & Agentic Consulting">AI & Agentic Consulting</option>
+                    <option value="n8n / Make Automation">n8n / Make Automation</option>
+                    <option value="Custom Agent Development">Custom Agent Development</option>
+                    <option value="LangChain / CrewAI / AutoGen">LangChain / CrewAI / AutoGen</option>
+                    <option value="Partnership">Partnership</option>
+                    <option value="Free Ebook Download">Free Ebook Download</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5 flex flex-col">
+                  <label className="text-xs text-muted-foreground font-medium mb-1.5">Stage</label>
+                  <select
+                    value={createForm.stage}
+                    onChange={e => setCreateForm(f => ({...f, stage: e.target.value}))}
+                    className="w-full bg-muted border border-border rounded-md px-3 h-9 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Select a stage...</option>
+                    <option value="Just starting out">Just starting out</option>
+                    <option value="Learning and exploring AI">Learning and exploring AI</option>
+                    <option value="Already building something">Already building something</option>
+                    <option value="Growing an existing business">Growing an existing business</option>
+                    <option value="Need help with a specific problem">Need help with a specific problem</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Goal</label>
+                  <Input placeholder="e.g. Automate lead follow-up" value={createForm.goal} onChange={e => setCreateForm(f => ({...f, goal: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Best Time to Reach</label>
+                  <Input placeholder="e.g. Weekdays 2-5pm PT" value={createForm.best_time} onChange={e => setCreateForm(f => ({...f, best_time: e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5 flex flex-col">
+                  <label className="text-xs text-muted-foreground font-medium mb-1.5">Status</label>
+                  <select
+                    value={createForm.status}
+                    onChange={e => setCreateForm(f => ({...f, status: e.target.value as any}))}
+                    className="w-full bg-muted border border-border rounded-md px-3 h-9 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="won">Won</option>
+                    <option value="lost">Lost</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs text-muted-foreground font-medium">Needs / Project details</label>
+                <Textarea rows={3} placeholder="Any specific notes or details from user..." value={createForm.needs} onChange={e => setCreateForm(f => ({...f, needs: e.target.value}))} />
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs text-muted-foreground font-medium">Admin Notes (internal)</label>
+                <Textarea rows={2} placeholder="Add private notes about this lead..." value={createForm.notes} onChange={e => setCreateForm(f => ({...f, notes: e.target.value}))} />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setCreateOpen(false)}>Cancel</Button>
+                <Button type="submit" variant="hero" size="sm" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Creating..." : "Create Lead"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Lead Modal */}
+      {editState && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg text-foreground">Edit Contact</h3>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditState(null)}><X size={13} /></Button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!editForm.first_name.trim() || !editForm.last_name.trim() || !editForm.email.trim()) {
+                toast.error("First Name, Last Name, and Email are required");
+                return;
+              }
+              updateMutation.mutate({ id: editState.id, data: editForm });
+            }} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">First Name <span className="text-red-500">*</span></label>
+                  <Input required placeholder="First Name" value={editForm.first_name} onChange={e => setEditForm(f => ({...f, first_name: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Last Name <span className="text-red-500">*</span></label>
+                  <Input required placeholder="Last Name" value={editForm.last_name} onChange={e => setEditForm(f => ({...f, last_name: e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Email <span className="text-red-500">*</span></label>
+                  <Input required type="email" placeholder="email@example.com" value={editForm.email} onChange={e => setEditForm(f => ({...f, email: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Phone</label>
+                  <Input placeholder="Phone Number" value={editForm.phone} onChange={e => setEditForm(f => ({...f, phone: e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5 flex flex-col">
+                  <label className="text-xs text-muted-foreground font-medium mb-1.5">I need help with...</label>
+                  <select
+                    value={editForm.help_with}
+                    onChange={e => setEditForm(f => ({...f, help_with: e.target.value}))}
+                    className="w-full bg-muted border border-border rounded-md px-3 h-9 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Select help option...</option>
+                    <option value="1-on-1 Coaching Session ($49)">1-on-1 Coaching Session ($49)</option>
+                    <option value="Live Workshop ($29)">Live Workshop ($29)</option>
+                    <option value="AI & Agentic Consulting">AI & Agentic Consulting</option>
+                    <option value="n8n / Make Automation">n8n / Make Automation</option>
+                    <option value="Custom Agent Development">Custom Agent Development</option>
+                    <option value="LangChain / CrewAI / AutoGen">LangChain / CrewAI / AutoGen</option>
+                    <option value="Partnership">Partnership</option>
+                    <option value="Free Ebook Download">Free Ebook Download</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5 flex flex-col">
+                  <label className="text-xs text-muted-foreground font-medium mb-1.5">Stage</label>
+                  <select
+                    value={editForm.stage}
+                    onChange={e => setEditForm(f => ({...f, stage: e.target.value}))}
+                    className="w-full bg-muted border border-border rounded-md px-3 h-9 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Select a stage...</option>
+                    <option value="Just starting out">Just starting out</option>
+                    <option value="Learning and exploring AI">Learning and exploring AI</option>
+                    <option value="Already building something">Already building something</option>
+                    <option value="Growing an existing business">Growing an existing business</option>
+                    <option value="Need help with a specific problem">Need help with a specific problem</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Goal</label>
+                  <Input placeholder="e.g. Automate lead follow-up" value={editForm.goal} onChange={e => setEditForm(f => ({...f, goal: e.target.value}))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium">Best Time to Reach</label>
+                  <Input placeholder="e.g. Weekdays 2-5pm PT" value={editForm.best_time} onChange={e => setEditForm(f => ({...f, best_time: e.target.value}))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="space-y-1.5 flex flex-col">
+                  <label className="text-xs text-muted-foreground font-medium mb-1.5">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={e => setEditForm(f => ({...f, status: e.target.value as any}))}
+                    className="w-full bg-muted border border-border rounded-md px-3 h-9 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="won">Won</option>
+                    <option value="lost">Lost</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs text-muted-foreground font-medium">Needs / Project details</label>
+                <Textarea rows={3} placeholder="Any specific notes or details from user..." value={editForm.needs} onChange={e => setEditForm(f => ({...f, needs: e.target.value}))} />
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs text-muted-foreground font-medium">Admin Notes (internal)</label>
+                <Textarea rows={2} placeholder="Add private notes about this lead..." value={editForm.notes} onChange={e => setEditForm(f => ({...f, notes: e.target.value}))} />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setEditState(null)}>Cancel</Button>
+                <Button type="submit" variant="hero" size="sm" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Lead list */}
       <div className="space-y-2">
         {isLoading && [1,2,3].map(i => <div key={i} className="h-16 rounded-lg bg-card/50 animate-pulse" />)}
-        {!isLoading && filtered.length === 0 && (
+
+        {isError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive animate-fade-in">
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <p className="font-medium mb-1">Failed to load leads</p>
+              <p className="opacity-80">{(error as any)?.message ?? "An error occurred"}</p>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !isError && filtered.length === 0 && (
           <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
             {search || statusFilter !== "all" ? "No leads match your filters." : "No leads yet."}
           </div>
@@ -221,6 +553,27 @@ export function LeadsTab() {
                     <option value="won">won</option>
                     <option value="lost">lost</option>
                   </select>
+                  <Button
+                    size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setEditState(l);
+                      setEditForm({
+                        first_name: l.first_name,
+                        last_name: l.last_name,
+                        email: l.email,
+                        phone: l.phone || "",
+                        help_with: l.help_with || "",
+                        goal: l.goal || "",
+                        stage: l.stage || "",
+                        needs: l.needs || "",
+                        best_time: l.best_time || "",
+                        status: l.status as any,
+                        notes: l.notes || "",
+                      });
+                    }}
+                  >
+                    <Edit3 size={11} /> Edit
+                  </Button>
                   <Button
                     size="sm" variant="ghost" className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
                     onClick={() => { setReplyState({ id: l.id, email: l.email, name: l.first_name }); setReplyForm({ subject: `Re: Your enquiry`, body: `Hi ${l.first_name},\n\n` }); }}

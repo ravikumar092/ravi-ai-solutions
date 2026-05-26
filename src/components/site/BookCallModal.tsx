@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ export function BookCallModal({
     e.preventDefault();
     setLoading(true);
     try {
-      await submit({ data: form });
+      await submit(form);
       toast.success("Request received — I'll be in touch shortly.");
       onOpenChange(false);
     } catch (err: any) {

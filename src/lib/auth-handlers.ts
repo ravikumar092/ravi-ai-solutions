@@ -1,14 +1,6 @@
 import * as oidc from 'openid-client';
 import memoize from 'memoizee';
-import pg from 'pg';
 import { saveSession, generateSessionId, deleteSession } from './replit-auth.server';
-
-const { Pool } = pg;
-let _pool: InstanceType<typeof Pool> | undefined;
-function getPool() {
-  if (!_pool) _pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  return _pool;
-}
 
 const getOidcConfig = memoize(
   async () =>
@@ -89,21 +81,11 @@ export async function handleCallback(request: Request): Promise<Response> {
     const lastName = (claims.last_name as string) ?? null;
     const profileImageUrl = (claims.profile_image_url as string) ?? null;
 
-    const pool = getPool();
-    await pool.query(
-      `INSERT INTO replit_users (id, email, first_name, last_name, profile_image_url, updated_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
-       ON CONFLICT (id) DO UPDATE SET
-         email = EXCLUDED.email, first_name = EXCLUDED.first_name,
-         last_name = EXCLUDED.last_name, profile_image_url = EXCLUDED.profile_image_url,
-         updated_at = NOW()`,
-      [userId, email, firstName, lastName, profileImageUrl]
-    );
-
+    // Note: user upsert into replit_users skipped — using in-memory session store.
     const sessionId = generateSessionId();
     await saveSession(sessionId, userId, { email, firstName, lastName, profileImageUrl });
 
-    const isSecure = !domain.includes('localhost');
+    const isSecure = request.url.startsWith('https:') || request.headers.get('x-forwarded-proto') === 'https';
     const sessionCookie = [
       `replit_session=${encodeURIComponent(sessionId)}`,
       'Path=/',

@@ -1,13 +1,5 @@
-import pg from 'pg';
 import { supabaseAdmin } from '@/integrations/supabase/admin-client';
-
-const { Pool } = pg;
-
-let _pool: InstanceType<typeof Pool> | undefined;
-function getPool() {
-  if (!_pool) _pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  return _pool;
-}
+import { getLocalSession, saveLocalSession, deleteLocalSession } from './session-store';
 
 export type ReplitSession = {
   userId: string;
@@ -46,34 +38,23 @@ export async function getSession(request: Request): Promise<ReplitSession | null
   const sessionId = parseCookieValue(cookieHeader, 'replit_session');
   if (!sessionId) return null;
 
-  const pool = getPool();
-  try {
-    const res = await pool.query(
-      "SELECT sess FROM sessions WHERE sid = $1 AND expire > NOW()",
-      [sessionId]
-    );
-    if (!res.rows.length) return null;
-    const sess = res.rows[0].sess as any;
-    if (!sess?.userId) return null;
+  const sess = getLocalSession(sessionId);
+  if (!sess || !sess.userId) return null;
 
-    // Form-based admin sessions store isAdmin directly; OIDC users check Supabase
-    const admin = sess.isAdmin === true ? true : await isAdminInSupabase(sess.userId);
+  // Form-based admin sessions store isAdmin directly; OIDC users check Supabase
+  const admin = sess.isAdmin === true ? true : await isAdminInSupabase(sess.userId);
 
-    return {
-      userId: sess.userId,
-      isAdmin: admin,
-      user: {
-        id: sess.userId,
-        email: sess.email ?? null,
-        firstName: sess.firstName ?? null,
-        lastName: sess.lastName ?? null,
-        profileImageUrl: sess.profileImageUrl ?? null,
-      },
-    };
-  } catch (e) {
-    console.error('[replit-auth] getSession error:', e);
-    return null;
-  }
+  return {
+    userId: sess.userId,
+    isAdmin: admin,
+    user: {
+      id: sess.userId,
+      email: sess.email ?? null,
+      firstName: sess.firstName ?? null,
+      lastName: sess.lastName ?? null,
+      profileImageUrl: sess.profileImageUrl ?? null,
+    },
+  };
 }
 
 export async function saveSession(
@@ -81,19 +62,13 @@ export async function saveSession(
   userId: string,
   extraData: Record<string, any> = {}
 ): Promise<void> {
-  const pool = getPool();
   const expire = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const sess = { userId, ...extraData };
-  await pool.query(
-    `INSERT INTO sessions (sid, sess, expire) VALUES ($1, $2, $3)
-     ON CONFLICT (sid) DO UPDATE SET sess = $2, expire = $3`,
-    [sessionId, JSON.stringify(sess), expire]
-  );
+  saveLocalSession(sessionId, sess, expire);
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-  const pool = getPool();
-  await pool.query('DELETE FROM sessions WHERE sid = $1', [sessionId]);
+  deleteLocalSession(sessionId);
 }
 
 export function generateSessionId(): string {

@@ -1,10 +1,58 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import ws from 'ws';
 
 function createSupabaseAdminClient() {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Load .env manually in Node server environment
+  if (typeof window === 'undefined') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const envPath = path.resolve(process.cwd(), '.env');
+      if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf-8');
+        envContent.split('\n').forEach((line => {
+          const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+          if (match) {
+            const key = match[1];
+            let value = match[2] || '';
+            if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+            if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+            process.env[key] = value;
+          }
+        }));
+      }
+    } catch (_) {
+      try {
+        // Fallback for bundlers supporting dynamic import
+        Promise.all([import('fs'), import('path')]).then((([fs, path]) => {
+          const envPath = path.resolve(process.cwd(), '.env');
+          if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf-8');
+            envContent.split('\n').forEach((line => {
+              const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+              if (match) {
+                const key = match[1];
+                let value = match[2] || '';
+                if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+                if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+                process.env[key] = value;
+              }
+            }));
+          }
+        })).catch(() => {});
+      } catch (_) {}
+    }
+  }
+
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  let SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (SUPABASE_SERVICE_ROLE_KEY) {
+      console.warn(`[Supabase] Warning: SUPABASE_SERVICE_ROLE_KEY is missing. Falling back to publishable/anon key.`);
+    }
+  }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
@@ -20,9 +68,6 @@ function createSupabaseAdminClient() {
       storage: undefined,
       persistSession: false,
       autoRefreshToken: false,
-    },
-    realtime: {
-      transport: ws,
     },
   });
 }

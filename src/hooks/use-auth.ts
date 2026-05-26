@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { getMe } from "@/routes/api/me";
 
 export function useAuth() {

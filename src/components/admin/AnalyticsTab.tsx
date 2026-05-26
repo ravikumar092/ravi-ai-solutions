@@ -1,4 +1,4 @@
-import { useServerFn } from "@tanstack/react-start";
+import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery } from "@tanstack/react-query";
 import { listLeads } from "@/lib/leads.functions";
 

@@ -133,3 +133,75 @@ export const replyToLead = createServerFn({ method: "POST" })
     await supabaseAdmin.from("leads").update({ status: "contacted" }).eq("id", data.id);
     return { ok: true };
   });
+
+export const adminCreateLead = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      first_name: z.string().trim().min(1).max(80),
+      last_name: z.string().trim().min(1).max(80),
+      email: z.string().trim().email().max(200),
+      phone: z.string().trim().max(40).optional().or(z.literal("")).nullable(),
+      help_with: z.string().max(80).optional().or(z.literal("")).nullable(),
+      goal: z.string().max(500).optional().or(z.literal("")).nullable(),
+      stage: z.string().max(120).optional().or(z.literal("")).nullable(),
+      needs: z.string().max(2000).optional().or(z.literal("")).nullable(),
+      best_time: z.string().max(200).optional().or(z.literal("")).nullable(),
+      status: z.enum(["new", "contacted", "won", "lost"]).default("new"),
+      notes: z.string().max(5000).optional().or(z.literal("")).nullable(),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    await requireAdminAuth();
+    const { error } = await supabaseAdmin.from("leads").insert({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      phone: data.phone || null,
+      help_with: data.help_with || null,
+      goal: data.goal || null,
+      stage: data.stage || null,
+      needs: data.needs || null,
+      best_time: data.best_time || null,
+      status: data.status,
+      notes: data.notes || null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpdateLead = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      first_name: z.string().trim().min(1).max(80),
+      last_name: z.string().trim().min(1).max(80),
+      email: z.string().trim().email().max(200),
+      phone: z.string().trim().max(40).optional().or(z.literal("")).nullable(),
+      help_with: z.string().max(80).optional().or(z.literal("")).nullable(),
+      goal: z.string().max(500).optional().or(z.literal("")).nullable(),
+      stage: z.string().max(120).optional().or(z.literal("")).nullable(),
+      needs: z.string().max(2000).optional().or(z.literal("")).nullable(),
+      best_time: z.string().max(200).optional().or(z.literal("")).nullable(),
+      status: z.enum(["new", "contacted", "won", "lost"]),
+      notes: z.string().max(5000).optional().or(z.literal("")).nullable(),
+    }).parse(d)
+  )
+  .handler(async ({ data }) => {
+    await requireAdminAuth();
+    const { error } = await supabaseAdmin.from("leads").update({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      phone: data.phone || null,
+      help_with: data.help_with || null,
+      goal: data.goal || null,
+      stage: data.stage || null,
+      needs: data.needs || null,
+      best_time: data.best_time || null,
+      status: data.status,
+      notes: data.notes || null,
+    }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+

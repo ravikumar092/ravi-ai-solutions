@@ -1,13 +1,27 @@
 import { Youtube, Mail } from "lucide-react";
+import { useServerFn } from "@/hooks/use-server-fn";
+import { useQuery } from "@tanstack/react-query";
+import { getSettings } from "@/lib/settings.functions";
 
 export function Footer() {
+  const fetchSettings = useServerFn(getSettings);
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: () => fetchSettings(),
+    staleTime: 5 * 60 * 1000
+  });
+
+  const contactEmail = settings?.contact_email || "ravikumar@devforge.dev";
+  const youtubeUrl = settings?.youtube_url || "https://www.youtube.com/@RaviKumarAILab";
+  const siteName = settings?.site_name || "Ravi Kumar AI Lab";
+
   return (
     <footer className="border-t border-border mt-24">
       <div className="mx-auto max-w-7xl px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-muted-foreground">
-        <p>© {new Date().getFullYear()} Ravi Kumar AI Lab. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
         <div className="flex items-center gap-6">
           <a
-            href="https://www.youtube.com/@RaviKumarAILab"
+            href={youtubeUrl}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 hover:text-foreground transition"
@@ -15,10 +29,10 @@ export function Footer() {
             <Youtube size={16} /> YouTube
           </a>
           <a
-            href="mailto:ravikumar@devforge.dev"
+            href={`mailto:${contactEmail}`}
             className="flex items-center gap-2 hover:text-foreground transition"
           >
-            <Mail size={16} /> ravikumar@devforge.dev
+            <Mail size={16} /> {contactEmail}
           </a>
         </div>
       </div>
