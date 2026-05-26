@@ -43,9 +43,15 @@ import { getSettings } from "@/lib/settings.functions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+<<<<<<< HEAD
       { title: "Ravi Kumar AI Lab — Build Smarter. Automate More. Earn Online." },
       { name: "description", content: "The ultimate builder platform, AI tools, cloneable workflows, courses, and accountability community for solo founders, creators, and indie hackers by Ravi Kumar." },
       { property: "og:title", content: "Ravi Kumar AI Lab — Build Smarter. Automate More. Earn Online." },
+=======
+      { title: "The Solo Entrepreneur — Build Smarter. Automate More. Earn Online." },
+      { name: "description", content: "The ultimate builder platform, AI tools, cloneable workflows, courses, and accountability community for solo founders, creators, and indie hackers by Ravi Kumar." },
+      { property: "og:title", content: "The Solo Entrepreneur — Build Smarter. Automate More. Earn Online." },
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
       { property: "og:description", content: "Upgrade your solo enterprise with interactive startup validators, pricing models, n8n templates, and community challenges." },
     ],
   }),
@@ -62,7 +68,10 @@ function Landing() {
   const fetchTestimonials = useServerFn(listPublicTestimonials);
   const fetchFaqs = useServerFn(listPublicFaqs);
   const fetchPosts = useServerFn(listPublicPosts);
+<<<<<<< HEAD
   const fetchSettings = useServerFn(getSettings);
+=======
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
 
   const { data: services } = useQuery({ queryKey: ["public-services"], queryFn: () => fetchServices() });
   const { data: videos } = useQuery({ queryKey: ["public-videos"], queryFn: () => fetchVideos() });
@@ -91,7 +100,11 @@ function Landing() {
       <Header />
       <main>
         {/* Hero Section */}
+<<<<<<< HEAD
         <Hero settings={settings} onBook={() => { setSelectedService(""); setModal(true); }} />
+=======
+        <Hero onBook={() => { setSelectedService(""); setModal(true); }} />
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
 
         {/* Bento Grid Platform Ecosystem */}
         <BentoGrid />
@@ -103,22 +116,37 @@ function Landing() {
         {(testimonials ?? []).length > 0 && <Testimonials testimonials={testimonials ?? []} />}
 
         {/* Video Tutorial Library */}
+<<<<<<< HEAD
         <Tutorials settings={settings} videos={videos ?? []} />
+=======
+        <Tutorials videos={videos ?? []} />
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
 
         {/* Blog / Articles */}
         {(posts ?? []).length > 0 && <BlogSection posts={posts ?? []} />}
 
         {/* Professional Profile */}
+<<<<<<< HEAD
         <About settings={settings} />
 
         {/* Lead Capture Funnel (Free Ebook Download) */}
         <LeadCapture settings={settings} />
+=======
+        <About />
+
+        {/* Lead Capture Funnel (Free Ebook Download) */}
+        <LeadCapture />
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
 
         {/* Frequently Asked Questions */}
         {(faqs ?? []).length > 0 && <FaqSection faqs={faqs ?? []} />}
 
         {/* Live Calendly Scheduler */}
+<<<<<<< HEAD
         <Schedule settings={settings} />
+=======
+        <Schedule />
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
       </main>
       <Footer />
       <BookCallModal open={modal} onOpenChange={setModal} defaultService={selectedService} />
@@ -132,12 +160,16 @@ function Hero({ settings, onBook }: { settings: any; onBook: () => void }) {
 
   useEffect(() => { r.current?.classList.add("in"); }, [r]);
 
+<<<<<<< HEAD
   const tagline = settings?.hero_tagline || "I design and ship AI workflows, agentic pipelines, and custom automation using n8n, Make, LangChain, CrewAI, and more — tailored to your business.";
   const headline = settings?.hero_headline || "Build autonomous systems that work while you sleep.";
   const headlineWords = headline.split(" ");
   const highlightCount = Math.min(Math.ceil(headlineWords.length * 0.4), 4);
   const mainHeadline = headlineWords.slice(0, -highlightCount).join(" ");
   const highlightHeadline = headlineWords.slice(-highlightCount).join(" ");
+
+=======
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
   return (
     <section className="relative pt-40 pb-20 overflow-hidden">
       <div className="absolute inset-0 grid-bg pointer-events-none opacity-85" />
@@ -153,12 +185,21 @@ function Hero({ settings, onBook }: { settings: any; onBook: () => void }) {
         </div>
 
         <h1 className="font-display text-5xl md:text-[4.75rem] font-bold leading-[1.03] tracking-[-0.03em] mb-8">
+<<<<<<< HEAD
           {mainHeadline}{" "}
           <span className="neon-text font-black">{highlightHeadline}</span>
         </h1>
 
         <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10">
           {tagline}
+=======
+          The Ultimate Platform for<br />
+          <span className="neon-text font-black">Solo Entrepreneurs</span>
+        </h1>
+
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-10">
+          Scale your micro-business with high-utility AI tools, production-ready n8n workflows, practical prompt libraries, and a community of active builders.
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16 relative z-10">
@@ -205,33 +246,14 @@ function BentoGrid() {
             Five interconnected hubs designed to help you build software products, optimize digital margins, and grow solo-operating leverage.
           </p>
         </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Box 1: AI Tools (Large) */}
           <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border border-border bg-card/45 p-8 transition-all hover:border-primary/20">
             <div className="absolute top-0 right-0 p-8 text-primary/10 group-hover:text-primary/20 transition-colors pointer-events-none">
               <Sparkles size={120} />
-      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
-      <div ref={r} className="reveal mx-auto max-w-7xl px-6 relative z-10">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-3">Platform Pillars</p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
-            An Operating System for <span className="neon-text">Modern Builders</span>
-          </h2>
-          <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
-            Five interconnected hubs designed to help you build software products, optimize digital margins, and grow solo-operating leverage.
-          </p>
-        </div>
+            </div>
             <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
-              <div>
-                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-primary mb-4 bg-primary/5 px-2.5 py-0.5 rounded-full border border-primary/25">
-                  Interactive Engine
               <div>
                 <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-primary mb-4 bg-primary/5 px-2.5 py-0.5 rounded-full border border-primary/25">
                   Interactive Engine
@@ -508,11 +530,98 @@ function Services({ services, onBuy }: { services: any[]; onBuy: (title: string)
 }
 
 /* ── LEAD CAPTURE FUNNEL ── */
-/* ── LEAD CAPTURE FUNNEL ── */
+<<<<<<< HEAD
 function LeadCapture({ settings }: { settings: any }) {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+=======
+function LeadCapture() {
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const r = useReveal<HTMLDivElement>();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await submitLead({
+        first_name: firstName,
+        last_name: "Subscriber",
+        email: email,
+        phone: "",
+        help_with: "Free Ebook Download",
+        goal: "Download The Solo Founder Playbook",
+        stage: "Waitlist / Lead",
+        needs: "Subscribed via landing page Free Ebook form.",
+        best_time: "",
+      });
+      toast.success("Check your inbox! We've sent your copy of The Solo Founder Playbook.");
+      setEmail("");
+      setFirstName("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to register email. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="py-24 border-t border-border bg-card/20 relative">
+      <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
+      <div ref={r} className="reveal mx-auto max-w-4xl px-6 relative z-10">
+        <div className="bg-card/40 border border-border rounded-2xl p-8 md:p-12 backdrop-blur text-center space-y-6">
+          <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+            <BookOpen size={22} className="animate-bounce" />
+          </div>
+          <div className="max-w-xl mx-auto space-y-3">
+            <h2 className="font-display text-3xl font-bold tracking-tight">
+              Get the <span className="neon-text">Solo Founder Playbook</span> (Free)
+            </h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Step-by-step blueprints, stack suggestions, checklists, and 50+ micro-niche ideas to launch your solo business and hit $10k MRR. Over 3,500 builders have downloaded it.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubscribe} className="max-w-md mx-auto grid grid-cols-1 sm:grid-cols-[1fr_1.5fr_auto] gap-3 pt-4 text-left">
+            <div>
+              <Label htmlFor="lead-name" className="sr-only">First Name</Label>
+              <Input
+                id="lead-name"
+                required
+                placeholder="First Name"
+                className="h-10 text-xs bg-muted/30"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="lead-email" className="sr-only">Email Address</Label>
+              <Input
+                id="lead-email"
+                type="email"
+                required
+                placeholder="you@email.com"
+                className="h-10 text-xs bg-muted/30"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
+            <Button type="submit" variant="hero" disabled={submitting} className="h-10 px-5 text-xs font-semibold uppercase tracking-wider">
+              {submitting ? <Loader2 size={13} className="animate-spin" /> : "Download" }
+            </Button>
+          </form>
+          <p className="text-[10px] text-muted-foreground">Zero spam. Pure leverage. Unsubscribe at any time.</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── TUTORIALS ── */
+function Tutorials({ videos }: { videos: any[] }) {
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
   const r = useReveal<HTMLDivElement>();
   const submit = useServerFn(submitLead);
 
@@ -694,6 +803,7 @@ function About({ settings }: { settings: any }) {
         <div>
           <p className="text-xs font-medium tracking-[0.3em] uppercase text-muted-foreground mb-6">Founder</p>
           <h2 className="font-display text-4xl md:text-5xl font-bold tracking-[-0.025em] leading-[1.08] mb-6">
+<<<<<<< HEAD
             Meet {founderName}
           </h2>
           <p className="text-muted-foreground leading-relaxed text-[15px] mb-4">
@@ -701,6 +811,15 @@ function About({ settings }: { settings: any }) {
           </p>
           <p className="text-muted-foreground leading-relaxed text-[15px] mb-8">
             Every pipeline, n8n schema, and agent layout showcased here is derived directly from client setups or co-building workshops.
+=======
+            Meet Ravi Kumar
+          </h2>
+          <p className="text-muted-foreground leading-relaxed text-[15px] mb-4">
+            13+ years of full-stack engineering across startups and digital enterprise models. Today, I build and document autonomous systems to help creators, freelancers, and builders work smarter and unlock solo business scale.
+          </p>
+          <p className="text-muted-foreground leading-relaxed text-[15px] mb-8">
+            Every pipeline, n8n schema, and agent layout showcased here is derived directly from client setups or public co-building workshops.
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
           </p>
 
           <div className="mb-8">
@@ -740,8 +859,13 @@ function About({ settings }: { settings: any }) {
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
           <div className="absolute bottom-5 left-6 right-6">
+<<<<<<< HEAD
             <p className="font-display text-base font-semibold">{siteName} channel</p>
             <p className="text-xs text-muted-foreground mt-0.5">By {founderName} — AI automation blueprints</p>
+=======
+            <p className="font-display text-base font-semibold">The Solo Entrepreneur channel</p>
+            <p className="text-xs text-muted-foreground mt-0.5">By Ravi Kumar — AI automation blueprints</p>
+>>>>>>> 4126444b753eb0cf277e1441dc091b3c623133f0
           </div>
         </a>
       </div>
