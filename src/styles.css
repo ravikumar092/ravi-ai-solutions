@@ -181,3 +181,12 @@ html:has(iframe) .cursor-glow-dot,
 html:has(iframe) .cursor-glow-ring {
   display: none !important;
 }
+
+/* Ensure Razorpay and Calendly overlays can receive pointer events even if Radix dialog locks body clicks */
+.razorpay-container,
+.razorpay-container *,
+iframe,
+.calendly-overlay,
+.calendly-overlay * {
+  pointer-events: auto !important;
+}

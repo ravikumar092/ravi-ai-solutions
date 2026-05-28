@@ -117,6 +117,18 @@ export function ProductPurchaseModal({
     }
   }, [open]);
 
+  // Release body pointer-events lock set by Radix UI when Razorpay overlay is active
+  useEffect(() => {
+    if (submitting) {
+      document.body.style.pointerEvents = "auto";
+    } else {
+      document.body.style.pointerEvents = "";
+    }
+    return () => {
+      document.body.style.pointerEvents = "";
+    };
+  }, [submitting]);
+
   // Auto-navigate to purchase detail page after success
   useEffect(() => {
     if (success && purchaseId) {
