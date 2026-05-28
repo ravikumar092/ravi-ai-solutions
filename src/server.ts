@@ -79,6 +79,73 @@ export default {
         })
       );
     }
+    if (url.pathname === "/api/debug-auth") {
+      try {
+        const headers: Record<string, string> = {};
+        request.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+
+        const cookieHeader = request.headers.get("cookie") ?? "";
+        const cookies: Record<string, string> = {};
+        cookieHeader.split(";").forEach((c) => {
+          const parts = c.split("=");
+          if (parts.length === 2) {
+            cookies[parts[0].trim()] = decodeURIComponent(parts[1].trim());
+          }
+        });
+
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        let keyInfo = "Not configured";
+        if (key) {
+          try {
+            const parts = key.split(".");
+            if (parts.length === 3) {
+              const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf8"));
+              keyInfo = `Configured (Role: ${payload?.role}, Issuer: ${payload?.iss})`;
+            } else {
+              keyInfo = `Configured (Invalid format - parts: ${parts.length})`;
+            }
+          } catch (e: any) {
+            keyInfo = `Configured (Error parsing JWT: ${e.message})`;
+          }
+        }
+
+        // Test Supabase connection
+        let dbStatus = "Unknown";
+        try {
+          const { supabaseAdmin } = await import("./integrations/supabase/admin-client");
+          const { data, error } = await supabaseAdmin.from("sessions").select("count", { count: "exact", head: true });
+          if (error) {
+            dbStatus = `Error: ${error.message}`;
+          } else {
+            dbStatus = `Connected, count: ${data || 0}`;
+          }
+        } catch (e: any) {
+          dbStatus = `Exception: ${e.message}`;
+        }
+
+        return new Response(
+          JSON.stringify({
+            url: request.url,
+            method: request.method,
+            headers,
+            cookies,
+            env: {
+              SUPABASE_URL: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL ? "Configured" : "Missing",
+              SUPABASE_SERVICE_ROLE_KEY_STATUS: keyInfo,
+            },
+            database: dbStatus,
+          }, null, 2),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+      }
+    }
     if (url.pathname === "/api/callback") {
       return handleCallback(request).catch(() =>
         new Response(null, { status: 302, headers: { Location: "/login?error=server_error" } })
