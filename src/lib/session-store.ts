@@ -41,18 +41,24 @@ export async function getLocalSession(sid: string): Promise<any | null> {
 
 export async function saveLocalSession(sid: string, sess: any, expire: Date): Promise<void> {
   try {
-    await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('sessions')
       .upsert({ sid, sess, expire: expire.toISOString() }, { onConflict: 'sid' });
+    if (error) {
+      console.error('[session-store] Supabase saveLocalSession error:', error.message || error);
+    }
   } catch (err) {
-    console.error('[session-store] saveLocalSession error:', err);
+    console.error('[session-store] saveLocalSession exception:', err);
   }
 }
 
 export async function deleteLocalSession(sid: string): Promise<void> {
   try {
-    await supabaseAdmin.from('sessions').delete().eq('sid', sid);
+    const { error } = await supabaseAdmin.from('sessions').delete().eq('sid', sid);
+    if (error) {
+      console.error('[session-store] Supabase deleteLocalSession error:', error.message || error);
+    }
   } catch (err) {
-    console.error('[session-store] deleteLocalSession error:', err);
+    console.error('[session-store] deleteLocalSession exception:', err);
   }
 }
