@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { adminListAllCommunityPosts, adminUpdateCommunityPost, adminDeleteCommunityPost, type CommunityPost } from "@/lib/community.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 export function CommunityTab() {
   const fetchAll = useServerFn(adminListAllCommunityPosts);
@@ -82,7 +83,7 @@ export function CommunityTab() {
           </Button>
         </div>
 
-        {isLoading && [1,2,3].map(i => <div key={i} className="h-24 rounded-lg bg-card/50 animate-pulse" />)}
+        {isLoading && <TabLoader label="Loading community posts…" />}
         {isError && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />

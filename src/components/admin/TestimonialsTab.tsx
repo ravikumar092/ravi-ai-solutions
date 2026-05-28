@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { listAllTestimonials, upsertTestimonial, deleteTestimonial } from "@/lib/testimonials.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 export function TestimonialsTab() {
   const fetchAll = useServerFn(listAllTestimonials);
@@ -51,7 +52,7 @@ export function TestimonialsTab() {
           </Button>
         </div>
 
-        {isLoading && [1,2,3].map(i => <div key={i} className="h-20 rounded-lg bg-card/50 animate-pulse" />)}
+        {isLoading && <TabLoader label="Loading testimonials…" />}
 
         {isError && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">

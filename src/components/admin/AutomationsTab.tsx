@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllAutomations, upsertAutomation, deleteAutomation, type Automation } from "@/lib/automations.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 export function AutomationsTab() {
   const fetchAll = useServerFn(listAllAutomations);
@@ -75,7 +76,7 @@ export function AutomationsTab() {
           </Button>
         </div>
 
-        {isLoading && [1,2,3].map(i => <div key={i} className="h-24 rounded-lg bg-card/50 animate-pulse" />)}
+        {isLoading && <TabLoader label="Loading automations…" />}
         {isError && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />

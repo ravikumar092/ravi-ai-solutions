@@ -85,7 +85,9 @@ export async function handleCallback(request: Request): Promise<Response> {
     const sessionId = generateSessionId();
     await saveSession(sessionId, userId, { email, firstName, lastName, profileImageUrl });
 
-    const isSecure = request.url.startsWith('https:') || request.headers.get('x-forwarded-proto') === 'https';
+    const domain = new URL(request.url).hostname;
+    const isLocalhost = domain === 'localhost' || domain === '127.0.0.1';
+    const isSecure = (request.url.startsWith('https:') || request.headers.get('x-forwarded-proto') === 'https') && !isLocalhost;
     const sessionCookie = [
       `replit_session=${encodeURIComponent(sessionId)}`,
       'Path=/',

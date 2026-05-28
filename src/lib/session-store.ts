@@ -15,10 +15,18 @@ export async function getLocalSession(sid: string): Promise<any | null> {
       .eq('sid', sid)
       .single();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error('[session-store] Supabase getLocalSession error:', error.message || error);
+      return null;
+    }
+    if (!data) {
+      console.log('[session-store] No session data found in Supabase for sid:', sid);
+      return null;
+    }
 
     // Check expiry
     if (new Date(data.expire).getTime() < Date.now()) {
+      console.log('[session-store] Session expired for sid:', sid);
       // Expired — delete async, don't await
       deleteLocalSession(sid).catch(() => {});
       return null;

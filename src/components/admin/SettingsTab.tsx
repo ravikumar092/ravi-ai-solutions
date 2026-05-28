@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { getSettings, updateSettings } from "@/lib/settings.functions";
 import { diagnoseSupabaseConfig } from "@/lib/products.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 export function SettingsTab() {
   const fetchSettings = useServerFn(getSettings);
@@ -61,7 +62,7 @@ export function SettingsTab() {
     save.mutate();
   };
 
-  if (isLoading) return <div className="text-sm text-muted-foreground animate-pulse">Loading settings…</div>;
+  if (isLoading) return <TabLoader label="Loading settings…" />;
 
   const notificationsEnabled = form.notification_enabled === "true";
   const hasNotificationEmail = !!form.notification_email;

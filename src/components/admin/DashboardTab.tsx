@@ -7,6 +7,7 @@ import { Users, LayoutGrid, Youtube, TrendingUp, MessageSquare, FileText, HelpCi
 import { listLeads } from "@/lib/leads.functions";
 import { listAllServices } from "@/lib/services.functions";
 import { listAllVideos } from "@/lib/videos.functions";
+import { SkeletonStat, SkeletonRows } from "./AdminSkeletons";
 
 const STATUS_COLOR: Record<string, string> = {
   new: "bg-primary/20 text-primary",
@@ -20,10 +21,11 @@ export function DashboardTab({ onNav }: { onNav: (section: string) => void }) {
   const fetchServices = useServerFn(listAllServices);
   const fetchVideos = useServerFn(listAllVideos);
 
-  const { data: leads = [], error: leadsErr, isError: leadsIsErr } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
-  const { data: services = [], error: servicesErr, isError: servicesIsErr } = useQuery({ queryKey: ["admin-services"], queryFn: () => fetchServices() });
-  const { data: videosResult, error: videosErr, isError: videosIsErr } = useQuery({ queryKey: ["admin-videos"], queryFn: () => fetchVideos() });
+  const { data: leads = [], error: leadsErr, isError: leadsIsErr, isLoading: leadsLoading } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
+  const { data: services = [], error: servicesErr, isError: servicesIsErr, isLoading: servicesLoading } = useQuery({ queryKey: ["admin-services"], queryFn: () => fetchServices() });
+  const { data: videosResult, error: videosErr, isError: videosIsErr, isLoading: videosLoading } = useQuery({ queryKey: ["admin-videos"], queryFn: () => fetchVideos() });
   const videos = videosResult?.videos ?? [];
+  const isLoading = leadsLoading || servicesLoading || videosLoading;
 
   useEffect(() => {
     if (leadsIsErr) {
@@ -90,7 +92,9 @@ export function DashboardTab({ onNav }: { onNav: (section: string) => void }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
+        {isLoading
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonStat key={i} />)
+          : stats.map((s) => (
           <button
             key={s.label}
             onClick={s.action}
@@ -118,7 +122,11 @@ export function DashboardTab({ onNav }: { onNav: (section: string) => void }) {
               View all →
             </button>
           </div>
-          {recentLeads.length === 0 ? (
+          {isLoading ? (
+            <div className="p-4">
+              <SkeletonRows count={5} h="h-12" />
+            </div>
+          ) : recentLeads.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">No leads yet.</div>
           ) : (
             <div className="divide-y divide-border">

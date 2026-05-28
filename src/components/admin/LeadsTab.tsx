@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { listLeads, updateLeadStatus, updateLeadNotes, deleteLead, exportLeadsCSV, replyToLead, adminCreateLead, adminUpdateLead } from "@/lib/leads.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 const STATUS_STYLES: Record<string, string> = {
   new: "bg-primary/15 text-primary border-primary/20",
@@ -509,7 +510,7 @@ export function LeadsTab() {
 
       {/* Lead list */}
       <div className="space-y-2">
-        {isLoading && [1,2,3].map(i => <div key={i} className="h-16 rounded-lg bg-card/50 animate-pulse" />)}
+        {isLoading && <TabLoader label="Loading leads…" />}
 
         {isError && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive animate-fade-in">

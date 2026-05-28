@@ -26,7 +26,7 @@ export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Ravi Kumar AI Lab" }] }),
   loader: async () => {
     const user = await getMe();
-    if (!user) {
+    if (!user || !(user as any).isAdmin) {
       throw redirect({ to: "/login" });
     }
     return { user };

@@ -6,6 +6,7 @@ import { Search, CreditCard, DollarSign, Users, ShoppingBag, Calendar, AlertCirc
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminListPurchases } from "@/lib/purchases.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -143,9 +144,7 @@ export function PurchasesTab() {
       {/* Transaction Table */}
       <div className="bg-card/20 border border-border rounded-xl overflow-hidden backdrop-blur">
         {isLoading ? (
-          <div className="p-8 text-center text-xs text-muted-foreground animate-pulse">
-            Loading purchases transaction ledger...
-          </div>
+          <TabLoader label="Loading purchases…" />
         ) : isError ? (
           <div className="p-8 flex flex-col items-center justify-center text-center text-destructive gap-2">
             <AlertCircle size={24} />

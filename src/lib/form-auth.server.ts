@@ -127,7 +127,8 @@ export async function handleFormLogin(request: Request): Promise<Response> {
   await saveSession(sessionId, finalUserId, extraSessionData);
 
   const domain = new URL(request.url).hostname;
-  const isSecure = request.url.startsWith('https:') || request.headers.get('x-forwarded-proto') === 'https';
+  const isLocalhost = domain === 'localhost' || domain === '127.0.0.1';
+  const isSecure = (request.url.startsWith('https:') || request.headers.get('x-forwarded-proto') === 'https') && !isLocalhost;
   const sessionCookie = [
     `replit_session=${encodeURIComponent(sessionId)}`,
     'Path=/',

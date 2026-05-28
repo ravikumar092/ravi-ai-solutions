@@ -1,6 +1,7 @@
 import { useServerFn } from "@/hooks/use-server-fn";
 import { useQuery } from "@tanstack/react-query";
 import { listLeads } from "@/lib/leads.functions";
+import { TabLoader } from "./AdminSkeletons";
 
 function BarRow({ label, value, max, color = "bg-primary" }: { label: string; value: number; max: number; color?: string }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -19,7 +20,7 @@ export function AnalyticsTab() {
   const fetchLeads = useServerFn(listLeads);
   const { data: leads = [], isLoading } = useQuery({ queryKey: ["admin-leads"], queryFn: () => fetchLeads() });
 
-  if (isLoading) return <div className="text-sm text-muted-foreground animate-pulse">Loading analytics…</div>;
+  if (isLoading) return <TabLoader label="Loading analytics…" />;
 
   // Leads by status
   const byStatus: Record<string, number> = {};

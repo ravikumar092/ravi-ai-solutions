@@ -36,9 +36,11 @@ function parseCookieValue(cookieHeader: string, name: string): string | null {
 export async function getSession(request: Request): Promise<ReplitSession | null> {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const sessionId = parseCookieValue(cookieHeader, 'replit_session');
+  console.log(`[replit-auth] getSession sessionId from cookie: ${sessionId ? 'exists' : 'missing'}`);
   if (!sessionId) return null;
 
   const sess = await getLocalSession(sessionId);
+  console.log(`[replit-auth] getSession local session: ${sess ? 'found' : 'not found'}`);
   if (!sess || !sess.userId) return null;
 
   // Form-based admin sessions store isAdmin directly; OIDC users check Supabase

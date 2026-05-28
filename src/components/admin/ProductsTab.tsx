@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listAllProducts, upsertProduct, deleteProduct, getProductFileUploadUrl, type Product } from "@/lib/products.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { TabLoader } from "./AdminSkeletons";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: "$",
@@ -89,7 +90,7 @@ export function ProductsAdmin() {
           </Button>
         </div>
 
-        {isLoading && [1, 2, 3].map(i => <div key={i} className="h-24 rounded-lg bg-card/50 animate-pulse" />)}
+        {isLoading && <TabLoader label="Loading products…" />}
         {isError && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3 text-destructive">
             <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
