@@ -132,7 +132,8 @@ export default {
             headers,
             cookies,
             env: {
-              SUPABASE_URL: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL ? "Configured" : "Missing",
+              SUPABASE_URL: process.env.SUPABASE_URL,
+              VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
               SUPABASE_SERVICE_ROLE_KEY_STATUS: keyInfo,
             },
             database: dbStatus,
