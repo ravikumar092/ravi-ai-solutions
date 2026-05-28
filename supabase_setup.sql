@@ -488,5 +488,42 @@ BEGIN
 END
 $$;
 
+-- Create purchases table if not exists
+CREATE TABLE IF NOT EXISTS public.purchases (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+  product_title TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  customer_name TEXT NOT NULL,
+  customer_email TEXT NOT NULL,
+  razorpay_payment_id TEXT,
+  razorpay_order_id TEXT,
+  razorpay_signature TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  file_url TEXT,
+  file_name TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+
+-- Since the server backend queries purchases table using service_role, no public/authenticated RLS policies are strictly required for normal site operations.
+-- However, we can add a SELECT policy for authenticated users to view their own purchases (using their email match) as a security fallback.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'purchases' AND policyname = 'Users can view their own purchases') THEN
+        CREATE POLICY "Users can view their own purchases" ON public.purchases FOR SELECT
+          USING (auth.jwt() ->> 'email' = customer_email OR public.has_role(auth.uid(), 'admin'));
+    END IF;
+END
+$$;
+
+DROP TRIGGER IF EXISTS purchases_updated_at ON public.purchases;
+CREATE TRIGGER purchases_updated_at BEFORE UPDATE ON public.purchases
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+
 
 
