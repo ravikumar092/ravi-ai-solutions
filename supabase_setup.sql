@@ -509,10 +509,17 @@ CREATE TABLE IF NOT EXISTS public.purchases (
 
 ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
 
--- Since the server backend queries purchases table using service_role, no public/authenticated RLS policies are strictly required for normal site operations.
--- However, we can add a SELECT policy for authenticated users to view their own purchases (using their email match) as a security fallback.
+-- Allow service_role to bypass RLS for all operations (service_role key is used by server-side functions)
+-- This is the most reliable way to ensure server functions can write to the purchases table.
 DO $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'purchases' AND policyname = 'Service role full access to purchases') THEN
+        CREATE POLICY "Service role full access to purchases" ON public.purchases
+          FOR ALL
+          TO service_role
+          USING (true)
+          WITH CHECK (true);
+    END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'purchases' AND policyname = 'Users can view their own purchases') THEN
         CREATE POLICY "Users can view their own purchases" ON public.purchases FOR SELECT
           USING (auth.jwt() ->> 'email' = customer_email OR public.has_role(auth.uid(), 'admin'));
