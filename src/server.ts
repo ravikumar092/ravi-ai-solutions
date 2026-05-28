@@ -102,7 +102,7 @@ export default {
             const parts = key.split(".");
             if (parts.length === 3) {
               const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf8"));
-              keyInfo = `Configured (Role: ${payload?.role}, Issuer: ${payload?.iss})`;
+              keyInfo = `Configured (Role: ${payload?.role}, Issuer: ${payload?.iss}, Ref: ${payload?.ref})`;
             } else {
               keyInfo = `Configured (Invalid format - parts: ${parts.length})`;
             }
