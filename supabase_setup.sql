@@ -22,6 +22,11 @@ CREATE TABLE IF NOT EXISTS public.videos (
 
 ALTER TABLE public.videos ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone views active videos" ON public.videos;
+DROP POLICY IF EXISTS "Admins insert videos" ON public.videos;
+DROP POLICY IF EXISTS "Admins update videos" ON public.videos;
+DROP POLICY IF EXISTS "Admins delete videos" ON public.videos;
+
 CREATE POLICY "Anyone views active videos" ON public.videos FOR SELECT
   USING (is_active = true OR public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins insert videos" ON public.videos FOR INSERT
@@ -31,6 +36,7 @@ CREATE POLICY "Admins update videos" ON public.videos FOR UPDATE
 CREATE POLICY "Admins delete videos" ON public.videos FOR DELETE
   USING (public.has_role(auth.uid(), 'admin'));
 
+DROP TRIGGER IF EXISTS videos_updated_at ON public.videos;
 CREATE TRIGGER videos_updated_at BEFORE UPDATE ON public.videos
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
@@ -51,10 +57,15 @@ CREATE TABLE IF NOT EXISTS public.testimonials (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone views active testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Admins insert testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Admins update testimonials" ON public.testimonials;
+DROP POLICY IF EXISTS "Admins delete testimonials" ON public.testimonials;
 CREATE POLICY "Anyone views active testimonials" ON public.testimonials FOR SELECT USING (is_active = true OR public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins insert testimonials" ON public.testimonials FOR INSERT WITH CHECK (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins update testimonials" ON public.testimonials FOR UPDATE USING (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins delete testimonials" ON public.testimonials FOR DELETE USING (public.has_role(auth.uid(), 'admin'));
+DROP TRIGGER IF EXISTS testimonials_updated_at ON public.testimonials;
 CREATE TRIGGER testimonials_updated_at BEFORE UPDATE ON public.testimonials FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- FAQs
@@ -68,10 +79,15 @@ CREATE TABLE IF NOT EXISTS public.faqs (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ALTER TABLE public.faqs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone views active faqs" ON public.faqs;
+DROP POLICY IF EXISTS "Admins insert faqs" ON public.faqs;
+DROP POLICY IF EXISTS "Admins update faqs" ON public.faqs;
+DROP POLICY IF EXISTS "Admins delete faqs" ON public.faqs;
 CREATE POLICY "Anyone views active faqs" ON public.faqs FOR SELECT USING (is_active = true OR public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins insert faqs" ON public.faqs FOR INSERT WITH CHECK (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins update faqs" ON public.faqs FOR UPDATE USING (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins delete faqs" ON public.faqs FOR DELETE USING (public.has_role(auth.uid(), 'admin'));
+DROP TRIGGER IF EXISTS faqs_updated_at ON public.faqs;
 CREATE TRIGGER faqs_updated_at BEFORE UPDATE ON public.faqs FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- Blog posts
@@ -88,10 +104,15 @@ CREATE TABLE IF NOT EXISTS public.blog_posts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone views published posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins insert posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins update posts" ON public.blog_posts;
+DROP POLICY IF EXISTS "Admins delete posts" ON public.blog_posts;
 CREATE POLICY "Anyone views published posts" ON public.blog_posts FOR SELECT USING (is_published = true OR public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins insert posts" ON public.blog_posts FOR INSERT WITH CHECK (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins update posts" ON public.blog_posts FOR UPDATE USING (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins delete posts" ON public.blog_posts FOR DELETE USING (public.has_role(auth.uid(), 'admin'));
+DROP TRIGGER IF EXISTS blog_posts_updated_at ON public.blog_posts;
 CREATE TRIGGER blog_posts_updated_at BEFORE UPDATE ON public.blog_posts FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- Site settings
@@ -102,6 +123,8 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone reads settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Admins update settings" ON public.site_settings;
 CREATE POLICY "Anyone reads settings" ON public.site_settings FOR SELECT USING (true);
 CREATE POLICY "Admins update settings" ON public.site_settings FOR ALL USING (public.has_role(auth.uid(), 'admin'));
 
