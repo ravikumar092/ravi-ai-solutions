@@ -47,19 +47,36 @@ export const adminListAllCommunityPosts = createServerFn({ method: "GET" }).hand
 );
 
 const communityPostInput = z.object({
-  author: z.string().min(1).max(100),
-  avatar: z.string().min(1).max(60),
-  role: z.string().min(1).max(100),
   content: z.string().min(1).max(5000),
 });
 
 export const createCommunityPost = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => communityPostInput.parse(d))
   .handler(async ({ data }) => {
+    // Require login — derive author details from session, never trust client
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { getSession } = await import("./replit-auth.server");
+    const request = getRequest();
+    const session = await getSession(request);
+
+    if (!session || !session.user?.email) {
+      throw new Error("You must be signed in to post.");
+    }
+
+    const firstName = session.user.firstName || "";
+    const lastName = session.user.lastName || "";
+    const fullName = [firstName, lastName].filter(Boolean).join(" ") || session.user.email.split("@")[0];
+    const initials = fullName
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+
     const payload = {
-      author: data.author,
-      avatar: data.avatar,
-      role: data.role,
+      author: fullName,
+      avatar: initials,
+      role: "Builder",
       content: data.content,
       likes: 0,
       comments_count: 0,

@@ -11,6 +11,8 @@ import { Sparkles, MessageSquare, ThumbsUp, Heart, Share2, Plus, Trophy, Calenda
 import { toast } from "sonner";
 import { getSettings } from "@/lib/settings.functions";
 import { listPublicCommunityPosts, createCommunityPost } from "@/lib/community.functions";
+import { getMe } from "@/routes/api/me";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -61,7 +63,13 @@ function CommunityPage() {
 
   const fetchPosts = useServerFn(listPublicCommunityPosts);
   const addPost = useServerFn(createCommunityPost);
+  const fetchMe = useServerFn(getMe);
   const qc = useQueryClient();
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => fetchMe(),
+  });
 
   const { data: dbPosts = [] } = useQuery({
     queryKey: ["public-community"],
@@ -136,34 +144,19 @@ function CommunityPage() {
       setNewPostText("");
       qc.invalidateQueries({ queryKey: ["public-community"] });
     },
-    onError: (err) => {
-      console.warn("DB post submit error, using local fallback:", err);
-      const fallbackPost: FeedPost = {
-        id: Date.now().toString(),
-        author: settings?.founder_name ? `${settings.founder_name} (You)` : "You (Ravi Kumar AI Lab)",
-        avatar: settings?.founder_name ? settings.founder_name.split(" ").map((n: string) => n[0]).join("").toUpperCase() : "RK",
-        role: "Builder",
-        time: "Just now",
-        content: newPostText,
-        likes: 0,
-        commentsCount: 0,
-      };
-      setLocalPosts(prev => [fallbackPost, ...prev]);
-      setNewPostText("");
-      toast.success("Post published to feed!");
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to post. Please sign in and try again.");
     }
   });
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostText.trim()) return;
-
-    postMutation.mutate({
-      author: settings?.founder_name ? `${settings.founder_name} (You)` : "You (Ravi Kumar AI Lab)",
-      avatar: settings?.founder_name ? settings.founder_name.split(" ").map((n: string) => n[0]).join("").toUpperCase() : "RK",
-      role: "Builder",
-      content: newPostText,
-    });
+    if (!currentUser) {
+      toast.error("You must be signed in to post.");
+      return;
+    }
+    postMutation.mutate({ content: newPostText });
   };
 
   const handleLike = (id: string | number) => {
@@ -204,23 +197,46 @@ function CommunityPage() {
           {/* Main Feed Column */}
           <div className="space-y-6">
             {/* Create Post Card */}
-            <div className="bg-card/45 border border-border rounded-xl p-5 backdrop-blur">
-              <form onSubmit={handlePostSubmit} className="space-y-4">
-                <Textarea
-                  value={newPostText}
-                  onChange={e => setNewPostText(e.target.value)}
-                  placeholder="Share a milestone, ask a question, or talk about what you are automating today..."
-                  rows={3}
-                  className="bg-muted/15 border-border/50 text-xs focus-visible:ring-primary"
-                />
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-muted-foreground">Keep it practical & founder-first.</span>
-                  <Button type="submit" variant="hero" size="sm" className="h-8 text-xs gap-1.5 px-4 font-semibold">
-                    <Plus size={12} /> Post Update
-                  </Button>
+            {currentUser ? (
+              <div className="bg-card/45 border border-border rounded-xl p-5 backdrop-blur">
+                <form onSubmit={handlePostSubmit} className="space-y-4">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-xs text-primary">
+                      {(currentUser.firstName?.[0] || currentUser.email?.[0] || "U").toUpperCase()}
+                    </div>
+                    <span className="text-xs font-medium text-foreground">
+                      {currentUser.firstName || currentUser.email?.split("@")[0] || "You"}
+                    </span>
+                  </div>
+                  <Textarea
+                    value={newPostText}
+                    onChange={e => setNewPostText(e.target.value)}
+                    placeholder="Share a milestone, ask a question, or talk about what you are automating today..."
+                    rows={3}
+                    className="bg-muted/15 border-border/50 text-xs focus-visible:ring-primary"
+                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-muted-foreground">Keep it practical &amp; founder-first.</span>
+                    <Button type="submit" variant="hero" size="sm" className="h-8 text-xs gap-1.5 px-4 font-semibold" disabled={postMutation.isPending}>
+                      <Plus size={12} /> {postMutation.isPending ? "Posting..." : "Post Update"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div className="bg-card/45 border border-border rounded-xl p-5 backdrop-blur text-center space-y-3">
+                <p className="text-sm font-medium text-foreground">Join the conversation</p>
+                <p className="text-xs text-muted-foreground">Sign in to share updates, ask questions, and connect with other builders.</p>
+                <div className="flex gap-2 justify-center">
+                  <Link to="/signin">
+                    <Button variant="outlineNeon" size="sm" className="text-xs h-8 px-4">Sign In</Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button variant="hero" size="sm" className="text-xs h-8 px-4">Create Account</Button>
+                  </Link>
                 </div>
-              </form>
-            </div>
+              </div>
+            )}
 
             {/* Posts Feed list */}
             <div className="space-y-4">
