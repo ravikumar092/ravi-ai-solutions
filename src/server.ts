@@ -115,12 +115,33 @@ export default {
         let dbStatus = "Unknown";
         try {
           const { supabaseAdmin } = await import("./integrations/supabase/admin-client");
-          const { data, error } = await supabaseAdmin.from("sessions").select("sid, expire");
-          if (error) {
-            dbStatus = `Error: ${error.message}`;
-          } else {
-            dbStatus = `Connected, rows: ${data?.length || 0} (${JSON.stringify(data)})`;
+          const testSid = `vercel-test-${Date.now()}`;
+          
+          // Test insert
+          const { error: insertError } = await supabaseAdmin.from("sessions").insert({
+            sid: testSid,
+            sess: { vercelTest: true },
+            expire: new Date(Date.now() + 60000).toISOString()
+          });
+
+          let insertResult = "Success";
+          if (insertError) {
+            insertResult = `Failed: ${insertError.message} (${insertError.code})`;
           }
+
+          // Test select
+          const { data: rows, error: selectError } = await supabaseAdmin.from("sessions").select("sid, expire");
+          let selectResult = "";
+          if (selectError) {
+            selectResult = `Failed: ${selectError.message}`;
+          } else {
+            selectResult = `Rows count: ${rows?.length || 0} (${JSON.stringify(rows)})`;
+          }
+
+          // Test cleanup
+          await supabaseAdmin.from("sessions").delete().eq("sid", testSid);
+
+          dbStatus = `Insert: ${insertResult} | Select: ${selectResult}`;
         } catch (e: any) {
           dbStatus = `Exception: ${e.message}`;
         }
