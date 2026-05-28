@@ -100,17 +100,7 @@ export function Header() {
           <Link to="/" className="font-display text-base font-semibold tracking-tight flex items-center gap-2 flex-shrink-0">
             <span className="neon-text font-bold">{firstPart}</span>
             {lastPart && <span className="text-foreground font-bold">{lastPart}</span>}
-          </Link>
-
-          <nav className="hidden xl:flex items-center gap-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <Link to="/" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Home</Link>
-            <Link to="/tools" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Tools</Link>
-            <Link to="/products" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Store</Link>
-            <Link to="/automations" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Automations</Link>
-            <Link to="/courses" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Courses</Link>
-            <Link to="/community" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Community</Link>
-            <Link to="/dashboard" activeProps={{ className: "text-foreground font-semibold neon-text" }} className="hover:text-foreground transition">Dashboard</Link>
-          {/* Desktop nav */}
+          </Link>          {/* Desktop nav */}
           <nav className="hidden xl:flex items-center gap-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {navLinks.map(({ to, label }) => (
               <Link

@@ -205,33 +205,14 @@ function BentoGrid() {
             Five interconnected hubs designed to help you build software products, optimize digital margins, and grow solo-operating leverage.
           </p>
         </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Box 1: AI Tools (Large) */}
           <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border border-border bg-card/45 p-8 transition-all hover:border-primary/20">
             <div className="absolute top-0 right-0 p-8 text-primary/10 group-hover:text-primary/20 transition-colors pointer-events-none">
               <Sparkles size={120} />
-      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
-      <div ref={r} className="reveal mx-auto max-w-7xl px-6 relative z-10">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-3">Platform Pillars</p>
-          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight">
-            An Operating System for <span className="neon-text">Modern Builders</span>
-          </h2>
-          <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
-            Five interconnected hubs designed to help you build software products, optimize digital margins, and grow solo-operating leverage.
-          </p>
-        </div>
+            </div>
             <div className="relative z-10 flex flex-col h-full justify-between min-h-[220px]">
-              <div>
-                <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-primary mb-4 bg-primary/5 px-2.5 py-0.5 rounded-full border border-primary/25">
-                  Interactive Engine
               <div>
                 <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest text-primary mb-4 bg-primary/5 px-2.5 py-0.5 rounded-full border border-primary/25">
                   Interactive Engine
