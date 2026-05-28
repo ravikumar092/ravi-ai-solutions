@@ -47,10 +47,31 @@ function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (typeof window === 'undefined' && !SUPABASE_SERVICE_ROLE_KEY) {
-    const errorMsg = "SUPABASE_SERVICE_ROLE_KEY environment variable is not configured. Please add this key to your Vercel Project Settings under Environment Variables so that the admin backend can authenticate requests.";
-    console.error(`[Supabase] Critical Error: ${errorMsg}`);
-    throw new Error(errorMsg);
+  if (typeof window === 'undefined') {
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      const errorMsg = "SUPABASE_SERVICE_ROLE_KEY environment variable is not configured. Please add this key to your Vercel Project Settings under Environment Variables so that the admin backend can authenticate requests.";
+      console.error(`[Supabase] Critical Error: ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+
+    // Validate that the key is actually a service_role key (and not an anon/publishable key)
+    try {
+      const parts = SUPABASE_SERVICE_ROLE_KEY.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+        if (payload?.role !== 'service_role') {
+          const errorMsg = `SUPABASE_SERVICE_ROLE_KEY is set to a key with role '${payload?.role || 'unknown'}' instead of 'service_role'. Please replace it with your secret service_role key from your Supabase Dashboard -> Project Settings -> API.`;
+          console.error(`[Supabase] Critical Error: ${errorMsg}`);
+          throw new Error(errorMsg);
+        }
+      }
+    } catch (e: any) {
+      if (e.message?.includes("service_role")) {
+        throw e;
+      }
+      // Fail-silent on JSON parsing of invalid keys to avoid crashing on other issues, but log it
+      console.warn(`[Supabase] Failed to parse and validate SUPABASE_SERVICE_ROLE_KEY format:`, e.message || e);
+    }
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
