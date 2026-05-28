@@ -2,6 +2,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import path from "path";
 import fs from "fs";
 import type { Plugin } from "vite";
+import { nitro } from "nitro/vite";
 
 // Load .env file manually into process.env if it exists
 try {
@@ -87,6 +88,12 @@ export default defineConfig({
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL ?? ""),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY ?? ""),
     },
-    plugins: [browserStubStorageContext(), browserStubNodeModules()],
+    plugins: [
+      browserStubStorageContext(),
+      browserStubNodeModules(),
+      nitro({
+        preset: "vercel",
+      }),
+    ],
   },
 });
