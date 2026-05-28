@@ -177,3 +177,40 @@ export const getProductFileUploadUrl = createServerFn({ method: "POST" })
       throw new Error(error.message || "An unexpected error occurred during file upload initialization.");
     }
   });
+
+export const diagnoseSupabaseConfig = createServerFn({ method: "GET" }).handler(
+  async () => {
+    await requireAdminAuth();
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    let keyStatus = "Missing";
+    let keyRole = "N/A";
+    let keyPrefix = "N/A";
+
+    if (SUPABASE_SERVICE_ROLE_KEY) {
+      keyStatus = "Present";
+      keyPrefix = SUPABASE_SERVICE_ROLE_KEY.substring(0, 8) + "...";
+      try {
+        const parts = SUPABASE_SERVICE_ROLE_KEY.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          keyRole = payload?.role || "unknown";
+        } else {
+          keyRole = "Invalid JWT Format";
+        }
+      } catch (e: any) {
+        keyRole = `Error decoding: ${e.message}`;
+      }
+    }
+
+    return {
+      supabaseUrl: SUPABASE_URL ? "Configured" : "Missing",
+      serviceRoleKeyStatus: keyStatus,
+      serviceRoleKeyPrefix: keyPrefix,
+      decodedRole: keyRole,
+      envKeys: Object.keys(process.env).filter(k => k.toLowerCase().includes("supabase") || k.toLowerCase().includes("service"))
+    };
+  }
+);
+

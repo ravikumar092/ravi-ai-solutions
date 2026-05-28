@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { getSettings, updateSettings } from "@/lib/settings.functions";
+import { diagnoseSupabaseConfig } from "@/lib/products.functions";
 
 export function SettingsTab() {
   const fetchSettings = useServerFn(getSettings);
@@ -218,6 +219,93 @@ export function SettingsTab() {
           <Save size={14} /> {save.isPending ? "Saving…" : "Save changes"}
         </Button>
       )}
+
+      {/* Diagnostics */}
+      <div className="pt-6 border-t border-border">
+        <ConfigurationDiagnostics />
+      </div>
+    </div>
+  );
+}
+
+function ConfigurationDiagnostics() {
+  const diagnose = useServerFn(diagnoseSupabaseConfig);
+  const [data, setData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const runDiagnostics = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await diagnose();
+      setData(res);
+      toast.success("Diagnostics completed successfully");
+    } catch (err: any) {
+      setError(err.message || "Failed to run diagnostics");
+      toast.error("Diagnostics failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-semibold text-sm">System Diagnostics</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Check backend database and credentials configuration.</p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card/30 p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Supabase Configuration Diagnostics</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Verify if service keys are configured and valid on the server.</p>
+          </div>
+          <Button size="sm" variant="outlineNeon" onClick={runDiagnostics} disabled={loading}>
+            {loading ? "Running..." : "Run Diagnostics"}
+          </Button>
+        </div>
+
+        {error && (
+          <div className="p-3 rounded border border-destructive/30 bg-destructive/10 text-destructive text-xs">
+            {error}
+          </div>
+        )}
+
+        {data && (
+          <div className="rounded border border-border bg-muted/10 p-3 space-y-2 text-xs font-mono">
+            <div>
+              <span className="text-muted-foreground">Supabase URL: </span>
+              <span className={data.supabaseUrl === "Configured" ? "text-emerald-400" : "text-red-400"}>{data.supabaseUrl}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Service Role Key Status: </span>
+              <span className={data.serviceRoleKeyStatus === "Present" ? "text-emerald-400" : "text-red-400"}>{data.serviceRoleKeyStatus}</span>
+            </div>
+            {data.serviceRoleKeyStatus === "Present" && (
+              <>
+                <div>
+                  <span className="text-muted-foreground">Key Prefix: </span>
+                  <span>{data.serviceRoleKeyPrefix}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Decoded Role (JWT claims): </span>
+                  <span className={data.decodedRole === "service_role" ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}>
+                    {data.decodedRole}
+                  </span>
+                </div>
+              </>
+            )}
+            {data.envKeys && data.envKeys.length > 0 && (
+              <div>
+                <span className="text-muted-foreground">Configured Env Keys: </span>
+                <span>{data.envKeys.join(", ")}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
