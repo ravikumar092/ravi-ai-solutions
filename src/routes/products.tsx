@@ -230,24 +230,24 @@ function ProductsStore() {
               return (
               <div
                 key={p.id}
-                className="relative bg-card/40 border border-border hover:border-primary/20 rounded-xl p-6 flex flex-col transition-all duration-300 backdrop-blur group"
+                className="bg-card/40 border border-border hover:border-primary/20 rounded-xl p-6 flex flex-col transition-all duration-300 backdrop-blur group"
               >
-                {/* Badge */}
-                {p.badge && (
-                  <span className="absolute top-5 right-5 text-[9px] font-semibold tracking-wider uppercase text-primary border border-primary/20 rounded-full px-2.5 py-0.5 bg-primary/5">
-                    {p.badge}
-                  </span>
-                )}
-
                 {/* Header */}
                 <div className="flex items-start gap-4 mb-4">
                   <div className={`h-10 w-10 rounded-lg bg-muted/40 border border-border flex items-center justify-center ${iconColor} flex-shrink-0`}>
                     <Icon size={18} />
                   </div>
-                  <div>
-                    <h3 className="font-display text-base font-bold group-hover:text-primary transition-colors leading-tight">
-                      {p.title}
-                    </h3>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-display text-base font-bold group-hover:text-primary transition-colors leading-tight">
+                        {p.title}
+                      </h3>
+                      {p.badge && (
+                        <span className="flex-shrink-0 text-[9px] font-semibold tracking-wider uppercase text-primary border border-primary/20 rounded-full px-2.5 py-0.5 bg-primary/5 whitespace-nowrap mt-0.5">
+                          {p.badge}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[10px] text-muted-foreground mt-1 capitalize">{p.category === 'info' ? 'Book / Resource' : p.category === 'blueprint' ? 'System Blueprint' : 'Coaching & Service'}</p>
                   </div>
                 </div>
