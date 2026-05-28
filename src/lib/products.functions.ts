@@ -214,3 +214,39 @@ export const diagnoseSupabaseConfig = createServerFn({ method: "GET" }).handler(
   }
 );
 
+export const diagnoseSupabasePublic = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    let keyStatus = "Missing";
+    let keyRole = "N/A";
+    let keyLength = 0;
+
+    if (SUPABASE_SERVICE_ROLE_KEY) {
+      keyStatus = "Present";
+      keyLength = SUPABASE_SERVICE_ROLE_KEY.length;
+      try {
+        const parts = SUPABASE_SERVICE_ROLE_KEY.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          keyRole = payload?.role || "unknown";
+        } else {
+          keyRole = "Invalid JWT Format";
+        }
+      } catch (e: any) {
+        keyRole = `Error decoding: ${e.message}`;
+      }
+    }
+
+    return {
+      urlConfigured: !!SUPABASE_URL,
+      keyStatus,
+      keyLength,
+      keyRole,
+      now: new Date().toISOString()
+    };
+  }
+);
+
+
