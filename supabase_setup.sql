@@ -472,9 +472,6 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-files', 'product-files', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS on storage.objects (if not already enabled)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
 -- Allow public select access to product-files bucket
 DO $$
 BEGIN
