@@ -32,13 +32,22 @@ export function FaqsTab() {
 
   const save = useMutation({
     mutationFn: (v: any) => upsert(v),
-    onSuccess: () => { toast.success("FAQ saved"); qc.invalidateQueries({ queryKey: ["admin-faqs"] }); qc.invalidateQueries({ queryKey: ["public-faqs"] }); setEditing(null); },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+    onSuccess: () => {
+      toast.success("FAQ saved successfully");
+      qc.invalidateQueries({ queryKey: ["admin-faqs"] });
+      qc.invalidateQueries({ queryKey: ["public-faqs"] });
+      setEditing(null);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to save FAQ"),
   });
   const del = useMutation({
     mutationFn: (id: string) => remove({ id }),
-    onSuccess: () => { toast.success("Deleted"); qc.invalidateQueries({ queryKey: ["admin-faqs"] }); qc.invalidateQueries({ queryKey: ["public-faqs"] }); },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+    onSuccess: () => {
+      toast.success("FAQ deleted successfully");
+      qc.invalidateQueries({ queryKey: ["admin-faqs"] });
+      qc.invalidateQueries({ queryKey: ["public-faqs"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to delete FAQ"),
   });
 
   return (

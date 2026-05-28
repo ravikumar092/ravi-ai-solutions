@@ -45,13 +45,12 @@ function createSupabaseAdminClient() {
   }
 
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  let SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    if (SUPABASE_SERVICE_ROLE_KEY) {
-      console.warn(`[Supabase] Warning: SUPABASE_SERVICE_ROLE_KEY is missing. Falling back to publishable/anon key.`);
-    }
+  if (typeof window === 'undefined' && !SUPABASE_SERVICE_ROLE_KEY) {
+    const errorMsg = "SUPABASE_SERVICE_ROLE_KEY environment variable is not configured. Please add this key to your Vercel Project Settings under Environment Variables so that the admin backend can authenticate requests.";
+    console.error(`[Supabase] Critical Error: ${errorMsg}`);
+    throw new Error(errorMsg);
   }
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {

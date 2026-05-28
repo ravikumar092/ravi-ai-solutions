@@ -130,42 +130,50 @@ export const getProductFileUploadUrl = createServerFn({ method: "POST" })
     z.object({ fileName: z.string().min(1).max(255) }).parse(d)
   )
   .handler(async ({ data }) => {
-    await requireAdminAuth();
-    const ext = data.fileName.split(".").pop() ?? "bin";
-    const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-    const path = `products/${safeName}`;
-
-    const bucketName = "product-files";
     try {
-      const { data: buckets } = await supabaseAdmin.storage.listBuckets();
-      const exists = buckets?.some((b) => b.name === bucketName);
-      if (!exists) {
-        console.log(`[Supabase] Creating missing storage bucket: ${bucketName}`);
-        await supabaseAdmin.storage.createBucket(bucketName, {
-          public: true,
-        });
+      await requireAdminAuth();
+      const ext = data.fileName.split(".").pop() ?? "bin";
+      const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const path = `products/${safeName}`;
+
+      const bucketName = "product-files";
+      try {
+        const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+        const exists = buckets?.some((b) => b.name === bucketName);
+        if (!exists) {
+          console.log(`[Supabase] Creating missing storage bucket: ${bucketName}`);
+          await supabaseAdmin.storage.createBucket(bucketName, {
+            public: true,
+          });
+        }
+      } catch (e: any) {
+        console.warn("[Supabase] Failed to check/create bucket:", e.message || e);
+        if (e.message?.includes("environment variable is not configured")) {
+          throw e;
+        }
       }
-    } catch (e: any) {
-      console.warn("[Supabase] Failed to check/create bucket:", e.message || e);
+
+      const { data: signed, error } = await supabaseAdmin.storage
+        .from(bucketName)
+        .createSignedUploadUrl(path);
+
+      if (error || !signed) {
+        throw new Error(`Failed to create upload URL: ${error?.message ?? "unknown"}`);
+      }
+
+      // Build the public URL once uploaded
+      const { data: publicData } = supabaseAdmin.storage
+        .from("product-files")
+        .getPublicUrl(path);
+
+      return {
+        signedUrl: signed.signedUrl,
+        token: signed.token,
+        path,
+        publicUrl: publicData.publicUrl,
+      };
+    } catch (error: any) {
+      console.error("[products.functions] getProductFileUploadUrl error:", error);
+      throw new Error(error.message || "An unexpected error occurred during file upload initialization.");
     }
-
-    const { data: signed, error } = await supabaseAdmin.storage
-      .from(bucketName)
-      .createSignedUploadUrl(path);
-
-    if (error || !signed) {
-      throw new Error(`Failed to create upload URL: ${error?.message ?? "unknown"}`);
-    }
-
-    // Build the public URL once uploaded
-    const { data: publicData } = supabaseAdmin.storage
-      .from("product-files")
-      .getPublicUrl(path);
-
-    return {
-      signedUrl: signed.signedUrl,
-      token: signed.token,
-      path,
-      publicUrl: publicData.publicUrl,
-    };
   });

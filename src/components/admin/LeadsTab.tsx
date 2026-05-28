@@ -91,7 +91,11 @@ export function LeadsTab() {
 
   const setStatus = useMutation({
     mutationFn: (v: { id: string; status: any }) => updateStatus(v),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-leads"] }),
+    onSuccess: (_, variables) => {
+      toast.success(`Lead status updated to "${variables.status}"`);
+      qc.invalidateQueries({ queryKey: ["admin-leads"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to update status"),
   });
 
   const saveNotes = useMutation({
@@ -102,7 +106,11 @@ export function LeadsTab() {
 
   const del = useMutation({
     mutationFn: (id: string) => removeLeads({ id }),
-    onSuccess: () => { toast.success("Lead deleted"); qc.invalidateQueries({ queryKey: ["admin-leads"] }); },
+    onSuccess: () => {
+      toast.success("Lead deleted successfully");
+      qc.invalidateQueries({ queryKey: ["admin-leads"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to delete lead"),
   });
 
   const reply = useMutation({

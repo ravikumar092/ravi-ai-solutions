@@ -442,3 +442,31 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 
+-- ── MIGRATION 4: Set up storage buckets and policies for product-files ──
+
+-- Create the product-files bucket if it doesn't exist
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-files', 'product-files', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Enable RLS on storage.objects (if not already enabled)
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Allow public select access to product-files bucket
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage' AND policyname = 'Public SELECT access for product-files') THEN
+        CREATE POLICY "Public SELECT access for product-files" ON storage.objects FOR SELECT
+          USING (bucket_id = 'product-files');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'objects' AND schemaname = 'storage' AND policyname = 'Admin CRUD access for product-files') THEN
+        CREATE POLICY "Admin CRUD access for product-files" ON storage.objects FOR ALL
+          TO authenticated
+          USING (bucket_id = 'product-files' AND public.has_role(auth.uid(), 'admin'))
+          WITH CHECK (bucket_id = 'product-files' AND public.has_role(auth.uid(), 'admin'));
+    END IF;
+END
+$$;
+
+
+

@@ -40,22 +40,22 @@ export function BlogTab() {
   const save = useMutation({
     mutationFn: (v: any) => upsert(v),
     onSuccess: () => {
-      toast.success("Post saved");
+      toast.success("Blog post saved successfully");
       qc.invalidateQueries({ queryKey: ["admin-blog"] });
       qc.invalidateQueries({ queryKey: ["public-blog"] });
       setEditing(null);
     },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+    onError: (e: any) => toast.error(e?.message ?? "Failed to save blog post"),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => remove({ id }),
     onSuccess: () => {
-      toast.success("Deleted");
+      toast.success("Blog post deleted successfully");
       qc.invalidateQueries({ queryKey: ["admin-blog"] });
       qc.invalidateQueries({ queryKey: ["public-blog"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+    onError: (e: any) => toast.error(e?.message ?? "Failed to delete blog post"),
   });
 
   const published = (data as any[]).filter(p => p.is_published);
