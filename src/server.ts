@@ -115,11 +115,11 @@ export default {
         let dbStatus = "Unknown";
         try {
           const { supabaseAdmin } = await import("./integrations/supabase/admin-client");
-          const { data, error } = await supabaseAdmin.from("sessions").select("count", { count: "exact", head: true });
+          const { data, error } = await supabaseAdmin.from("sessions").select("sid, expire");
           if (error) {
             dbStatus = `Error: ${error.message}`;
           } else {
-            dbStatus = `Connected, count: ${data || 0}`;
+            dbStatus = `Connected, rows: ${data?.length || 0} (${JSON.stringify(data)})`;
           }
         } catch (e: any) {
           dbStatus = `Exception: ${e.message}`;
