@@ -38,7 +38,7 @@ export async function getSession(request: Request): Promise<ReplitSession | null
   const sessionId = parseCookieValue(cookieHeader, 'replit_session');
   if (!sessionId) return null;
 
-  const sess = getLocalSession(sessionId);
+  const sess = await getLocalSession(sessionId);
   if (!sess || !sess.userId) return null;
 
   // Form-based admin sessions store isAdmin directly; OIDC users check Supabase
@@ -64,11 +64,11 @@ export async function saveSession(
 ): Promise<void> {
   const expire = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const sess = { userId, ...extraData };
-  saveLocalSession(sessionId, sess, expire);
+  await saveLocalSession(sessionId, sess, expire);
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
-  deleteLocalSession(sessionId);
+  await deleteLocalSession(sessionId);
 }
 
 export function generateSessionId(): string {
