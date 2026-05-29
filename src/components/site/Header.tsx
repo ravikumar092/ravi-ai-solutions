@@ -97,7 +97,8 @@ export function Header() {
       >
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="font-display text-base font-semibold tracking-tight flex items-center gap-2 flex-shrink-0">
+          <Link to="/" className="font-display text-base font-semibold tracking-tight flex items-center gap-2.5 flex-shrink-0">
+            <img src="/logo.png" alt="Logo" className="h-6 w-6 rounded-md object-contain border border-primary/20" />
             <span className="neon-text font-bold">{firstPart}</span>
             {lastPart && <span className="text-foreground font-bold">{lastPart}</span>}
           </Link>          {/* Desktop nav */}
