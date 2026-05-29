@@ -197,21 +197,9 @@ export function SettingsTab() {
           <Textarea value={form.meta_description ?? ""} onChange={set("meta_description")} placeholder="Metadata description for search engines..." rows={2} className="bg-background" />
           <p className="text-[11px] text-muted-foreground mt-1">Main description for SEO purposes.</p>
         </Field>
-        <Field label="Founder Name">
-          <Input value={form.founder_name ?? ""} onChange={set("founder_name")} placeholder="Ravi Kumar" />
-          <p className="text-[11px] text-muted-foreground mt-1">Your name displayed in the About and Meet sections.</p>
-        </Field>
-        <Field label="Founder Bio">
-          <Textarea value={form.founder_bio ?? ""} onChange={set("founder_bio")} placeholder="Founder bio and credentials..." rows={3} className="bg-background" />
-          <p className="text-[11px] text-muted-foreground mt-1">Detailed description of your expertise and mission.</p>
-        </Field>
-        <Field label="About Page Headline">
-          <Input value={form.about_headline ?? ""} onChange={set("about_headline")} placeholder="Designing Autonomous Systems that work while you sleep." />
-          <p className="text-[11px] text-muted-foreground mt-1">Main heading displayed on the About page.</p>
-        </Field>
-        <Field label="Public contact email">
-          <Input type="email" value={form.contact_email ?? ""} onChange={set("contact_email")} placeholder="hello@yourdomain.com" />
-        </Field>
+        <p className="text-[11px] text-muted-foreground bg-muted/30 border border-border rounded-lg px-3 py-2">
+          💡 Founder profile, About page headline, and contact email are managed under <strong>About Page</strong> in the sidebar.
+        </p>
 
         <div className="pt-4 border-t border-border/60">
           <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Lead Magnet / Ebook</h4>

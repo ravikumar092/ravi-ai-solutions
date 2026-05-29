@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, LayoutGrid, Youtube, Users, MessageSquare,
   FileText, HelpCircle, Settings, TrendingUp, LogOut, Menu, X, ShoppingBag,
-  Cpu, BookOpen, MessageCircle, CreditCard
+  Cpu, BookOpen, MessageCircle, CreditCard, UserCircle
 } from "lucide-react";
 import { DashboardTab } from "@/components/admin/DashboardTab";
 import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
@@ -20,6 +20,7 @@ import { AutomationsTab } from "@/components/admin/AutomationsTab";
 import { CoursesTab } from "@/components/admin/CoursesTab";
 import { CommunityTab } from "@/components/admin/CommunityTab";
 import { PurchasesTab } from "@/components/admin/PurchasesTab";
+import { AboutTab } from "@/components/admin/AboutTab";
 import { getMe } from "@/routes/api/me";
 
 export const Route = createFileRoute("/admin")({
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/admin")({
 type Section =
   | "dashboard" | "services" | "videos" | "testimonials"
   | "blog" | "faqs" | "leads" | "settings" | "analytics" | "products"
-  | "automations" | "courses" | "community" | "purchases";
+  | "automations" | "courses" | "community" | "purchases" | "about";
 
 const NAV: { id: Section; label: string; icon: any }[] = [
   { id: "dashboard",    label: "Dashboard",    icon: LayoutDashboard },
@@ -53,6 +54,7 @@ const NAV: { id: Section; label: string; icon: any }[] = [
   { id: "testimonials",label: "Testimonials", icon: MessageSquare },
   { id: "blog",        label: "Blog",         icon: FileText },
   { id: "faqs",        label: "FAQ",          icon: HelpCircle },
+  { id: "about",       label: "About Page",   icon: UserCircle },
   { id: "settings",    label: "Settings",     icon: Settings },
 ];
 
@@ -139,6 +141,7 @@ function AdminPage() {
           {section === "courses"      && <CoursesTab />}
           {section === "community"    && <CommunityTab />}
           {section === "purchases"    && <PurchasesTab />}
+          {section === "about"        && <AboutTab />}
         </main>
       </div>
     </div>
