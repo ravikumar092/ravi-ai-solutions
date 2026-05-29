@@ -158,6 +158,7 @@ export default {
               SUPABASE_SERVICE_ROLE_KEY_STATUS: keyInfo,
             },
             database: dbStatus,
+            logs: (globalThis as any).__server_logs || [],
           }, null, 2),
           {
             status: 200,
