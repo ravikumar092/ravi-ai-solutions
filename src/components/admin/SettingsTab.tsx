@@ -143,6 +143,15 @@ export function SettingsTab() {
             </Field>
           )}
 
+          {notificationsEnabled && (
+            <Field label="Resend 'From' email address (Sender)">
+              <Input value={form.resend_from_email ?? ""} onChange={set("resend_from_email")} placeholder="Ravi Kumar AI Lab <onboarding@resend.dev>" />
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Defaults to <code className="bg-muted px-1 rounded">Ravi Kumar AI Lab &lt;onboarding@resend.dev&gt;</code>. Change this once you have verified a custom domain at Resend.
+              </p>
+            </Field>
+          )}
+
           {notificationsEnabled && !hasNotificationEmail && (
             <div className="flex items-start gap-2 text-amber-400 text-xs">
               <AlertTriangle size={13} className="mt-0.5 flex-shrink-0" />
@@ -163,7 +172,7 @@ export function SettingsTab() {
                 </a>
               </li>
               <li>Go to API Keys → Create API Key</li>
-              <li>In Replit, open Secrets and add <code className="bg-muted px-1 rounded">RESEND_API_KEY</code> with the value</li>
+              <li>In environment settings (.env or Vercel dashboard), add <code className="bg-muted px-1 rounded">RESEND_API_KEY</code> with the API key</li>
               <li>Enable the toggle above and set your email address</li>
             </ol>
           </div>

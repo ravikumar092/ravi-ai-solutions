@@ -209,10 +209,11 @@ export const diagnoseSupabaseConfig = createServerFn({ method: "GET" }).handler(
       serviceRoleKeyStatus: keyStatus,
       serviceRoleKeyPrefix: keyPrefix,
       decodedRole: keyRole,
-      envKeys: Object.keys(process.env).filter(k => k.toLowerCase().includes("supabase") || k.toLowerCase().includes("service") || k.toLowerCase().includes("razorpay"))
+      envKeys: Object.keys(process.env).filter(k => k.toLowerCase().includes("supabase") || k.toLowerCase().includes("service") || k.toLowerCase().includes("razorpay") || k.toLowerCase().includes("resend"))
     };
   }
 );
+
 
 
 export const diagnoseSupabasePublic = createServerFn({ method: "GET" }).handler(

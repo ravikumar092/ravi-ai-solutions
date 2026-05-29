@@ -24,6 +24,7 @@ export type SiteSettings = {
   ebook_title: string;
   ebook_desc: string;
   razorpay_mode: string;
+  resend_from_email: string;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -48,6 +49,7 @@ const DEFAULTS: SiteSettings = {
   ebook_title: "Ravi Kumar AI Lab Playbook",
   ebook_desc: "Step-by-step blueprints, stack suggestions, checklists, and 50+ micro-niche ideas to launch your solo business and hit $10k MRR. Over 3,500 builders have downloaded it.",
   razorpay_mode: "test",
+  resend_from_email: "Ravi Kumar AI Lab <onboarding@resend.dev>",
 };
 
 

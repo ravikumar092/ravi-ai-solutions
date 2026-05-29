@@ -1,3 +1,5 @@
+import { supabaseAdmin } from "../integrations/supabase/admin-client";
+
 export async function sendEmail({
   to,
   subject,
@@ -10,7 +12,22 @@ export async function sendEmail({
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, reason: "RESEND_API_KEY not configured" };
 
+  let fromEmail = "Ravi Kumar AI Lab <onboarding@resend.dev>";
   try {
+    const { data: fromSetting } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "resend_from_email")
+      .maybeSingle();
+    if (fromSetting?.value) {
+      fromEmail = fromSetting.value;
+    }
+  } catch (e) {
+    console.warn("[email] failed to fetch resend_from_email setting:", e);
+  }
+
+  try {
+    console.log(`[email] Sending email from "${fromEmail}" to "${to}" with subject: "${subject}"`);
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -18,7 +35,7 @@ export async function sendEmail({
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: "Ravi Kumar AI Lab <onboarding@resend.dev>",
+        from: fromEmail,
         to,
         subject,
         html,
@@ -26,10 +43,12 @@ export async function sendEmail({
     });
     if (!res.ok) {
       const err = await res.text();
+      console.error("[email] Resend API responded with error:", err);
       return { ok: false, reason: err };
     }
     return { ok: true };
   } catch (e: any) {
+    console.error("[email] Exception sending email:", e);
     return { ok: false, reason: e?.message };
   }
 }
