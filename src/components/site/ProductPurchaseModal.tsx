@@ -243,7 +243,7 @@ export function ProductPurchaseModal({
       if (!order || !order.id) throw new Error("Failed to initialize transaction order.");
 
       const options = {
-        key: "rzp_test_SsrTNCIouAETfu",
+        key: (order as any).keyId,
         amount: order.amount,
         currency: order.currency,
         name: "Ravi Kumar AI Lab",

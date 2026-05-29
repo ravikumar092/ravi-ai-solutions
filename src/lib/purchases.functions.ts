@@ -14,14 +14,27 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       .parse(d)
   )
   .handler(async ({ data }) => {
-    const keyId = process.env.RAZORPAY_KEY_ID || "rzp_test_SsrTNCIouAETfu";
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || "O5lzGm6opF5qTsIS5SI9nYpH";
+    const { data: modeSetting } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "razorpay_mode")
+      .maybeSingle();
+
+    const isLive = modeSetting?.value === "live";
+
+    const keyId = isLive
+      ? (process.env.RAZORPAY_LIVE_KEY_ID || "rzp_live_Sv4YoGl4tzm7mh")
+      : (process.env.RAZORPAY_KEY_ID || "rzp_test_SsrTNCIouAETfu");
+
+    const keySecret = isLive
+      ? (process.env.RAZORPAY_LIVE_KEY_SECRET || "Q51fcGrHr822PfWWz1IMjH1c")
+      : (process.env.RAZORPAY_KEY_SECRET || "O5lzGm6opF5qTsIS5SI9nYpH");
 
     const amountInCents = Math.round(data.amount * 100);
     const authString = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 
     try {
-      console.log(`[purchases] Creating Razorpay order for ${data.currency} ${data.amount} (${amountInCents} smallest units)`);
+      console.log(`[purchases] Creating Razorpay order (${isLive ? "LIVE" : "TEST"}) for ${data.currency} ${data.amount} (${amountInCents} smallest units)`);
       const response = await fetch("https://api.razorpay.com/v1/orders", {
         method: "POST",
         headers: {
@@ -43,7 +56,7 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
 
       const order = await response.json();
       console.log(`[purchases] Razorpay order created successfully: ${order.id}`);
-      return order;
+      return { ...order, keyId };
     } catch (err: any) {
       console.error("[purchases] Exception in createRazorpayOrder:", err);
       throw new Error(err.message || "Failed to create Razorpay order");
@@ -65,9 +78,19 @@ const verificationInput = z.object({
 export const verifyRazorpayPayment = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => verificationInput.parse(d))
   .handler(async ({ data }) => {
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || "O5lzGm6opF5qTsIS5SI9nYpH";
+    const { data: modeSetting } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "razorpay_mode")
+      .maybeSingle();
 
-    console.log(`[purchases] Verifying Razorpay payment. Order: ${data.razorpay_order_id}, Payment: ${data.razorpay_payment_id}`);
+    const isLive = modeSetting?.value === "live";
+
+    const keySecret = isLive
+      ? (process.env.RAZORPAY_LIVE_KEY_SECRET || "Q51fcGrHr822PfWWz1IMjH1c")
+      : (process.env.RAZORPAY_KEY_SECRET || "O5lzGm6opF5qTsIS5SI9nYpH");
+
+    console.log(`[purchases] Verifying Razorpay payment (${isLive ? "LIVE" : "TEST"}). Order: ${data.razorpay_order_id}, Payment: ${data.razorpay_payment_id}`);
 
     // Verify payment signature
     const text = data.razorpay_order_id + "|" + data.razorpay_payment_id;

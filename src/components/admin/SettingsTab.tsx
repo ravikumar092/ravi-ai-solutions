@@ -92,8 +92,42 @@ export function SettingsTab() {
         </Field>
       </Section>
 
+      {/* Razorpay Integration */}
+      <Section title="Razorpay Payment Gateway" description="Configure environment mode (Test vs. Live) and credentials.">
+        <div className="rounded-xl border border-border bg-card/30 p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Razorpay Live Mode</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Toggle to enable live payments. Disable for test mode.</p>
+            </div>
+            <Switch
+              checked={form.razorpay_mode === "live"}
+              onCheckedChange={(v) => {
+                setForm(f => ({ ...f, razorpay_mode: v ? "live" : "test" }));
+                setDirty(true);
+              }}
+            />
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-400" />
+              <p className="text-xs font-medium text-foreground">Environment Variables Checklist</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              To process payments, ensure the following API key environment variables are set in your hosting environment (e.g., Vercel):
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li><code className="bg-muted px-1 rounded text-foreground">RAZORPAY_KEY_ID</code> & <code className="bg-muted px-1 rounded text-foreground">RAZORPAY_KEY_SECRET</code> (for Test mode)</li>
+              <li><code className="bg-muted px-1 rounded text-foreground">RAZORPAY_LIVE_KEY_ID</code> & <code className="bg-muted px-1 rounded text-foreground">RAZORPAY_LIVE_KEY_SECRET</code> (for Live mode)</li>
+            </ul>
+          </div>
+        </div>
+      </Section>
+
       {/* Email notifications */}
       <Section title="Email Notifications" description="Get an email whenever someone fills the Book a Call form.">
+
         <div className="rounded-xl border border-border bg-card/30 p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>

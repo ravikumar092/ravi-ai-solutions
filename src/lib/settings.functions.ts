@@ -23,6 +23,7 @@ export type SiteSettings = {
   community_desc: string;
   ebook_title: string;
   ebook_desc: string;
+  razorpay_mode: string;
 };
 
 const DEFAULTS: SiteSettings = {
@@ -46,7 +47,9 @@ const DEFAULTS: SiteSettings = {
   community_desc: "Collaborate, ask questions, and share automation milestones with 2,000+ builders building in public.",
   ebook_title: "Ravi Kumar AI Lab Playbook",
   ebook_desc: "Step-by-step blueprints, stack suggestions, checklists, and 50+ micro-niche ideas to launch your solo business and hit $10k MRR. Over 3,500 builders have downloaded it.",
+  razorpay_mode: "test",
 };
+
 
 export const getSettings = createServerFn({ method: "GET" }).handler(
   async (): Promise<SiteSettings> => {
