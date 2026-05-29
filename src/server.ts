@@ -156,6 +156,7 @@ export default {
               SUPABASE_URL: process.env.SUPABASE_URL,
               VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
               SUPABASE_SERVICE_ROLE_KEY_STATUS: keyInfo,
+              SUPABASE_SERVICE_ROLE_KEY_LAST_10: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.slice(-10) : "None",
             },
             database: dbStatus,
             logs: (globalThis as any).__server_logs || [],
