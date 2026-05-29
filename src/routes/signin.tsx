@@ -14,6 +14,7 @@ import { loginPublicUser, syncSupabaseSession } from "@/lib/purchases.functions"
 export const Route = createFileRoute("/signin")({
   validateSearch: (s: Record<string, unknown>) => ({
     redirect: typeof s.redirect === "string" ? s.redirect : undefined,
+    mode: typeof s.mode === "string" ? s.mode : undefined,
   }),
   head: () => ({
     meta: [
@@ -28,6 +29,7 @@ function SigninPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/signin" });
   const redirectTo = (search as any).redirect || "/dashboard";
+  const mode = (search as any).mode;
   const loginUser = useServerFn(loginPublicUser);
   const syncSession = useServerFn(syncSupabaseSession);
   const qc = useQueryClient();
@@ -57,7 +59,11 @@ function SigninPage() {
             await supabase.auth.signOut();
             
             await qc.invalidateQueries({ queryKey: ["current-user"] });
-            toast.success("Welcome back! 👋");
+            if (mode === "signup") {
+              toast.success("Welcome aboard! 🎉");
+            } else {
+              toast.success("Welcome back! 👋");
+            }
             navigate({ to: redirectTo });
           }
         }
@@ -86,7 +92,11 @@ function SigninPage() {
               await supabase.auth.signOut();
               
               await qc.invalidateQueries({ queryKey: ["current-user"] });
-              toast.success("Welcome back! 👋");
+              if (mode === "signup") {
+                toast.success("Welcome aboard! 🎉");
+              } else {
+                toast.success("Welcome back! 👋");
+              }
               navigate({ to: redirectTo });
             }
           } catch (err: any) {
@@ -103,7 +113,7 @@ function SigninPage() {
       active = false;
       if (authListener) authListener.unsubscribe();
     };
-  }, [syncSession, redirectTo, navigate, qc]);
+  }, [syncSession, redirectTo, navigate, qc, mode]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);

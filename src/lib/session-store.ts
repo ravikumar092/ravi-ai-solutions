@@ -13,7 +13,7 @@ export async function getLocalSession(sid: string): Promise<any | null> {
       .from('sessions')
       .select('sess, expire')
       .eq('sid', sid)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[session-store] Supabase getLocalSession error:', error.message || error);

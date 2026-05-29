@@ -114,7 +114,7 @@ function SignupPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + "/signup?redirect=" + encodeURIComponent(redirectTo),
+          redirectTo: window.location.origin + "/signin?mode=signup&redirect=" + encodeURIComponent(redirectTo),
         },
       });
       if (error) throw error;

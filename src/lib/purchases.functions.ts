@@ -429,8 +429,7 @@ export const syncSupabaseSession = createServerFn({ method: "POST" })
     console.log(`[auth] Syncing Supabase session`);
 
     // Validate the token with Supabase Auth
-    const { supabase } = await import("../integrations/supabase/client");
-    const { data: { user }, error } = await supabase.auth.getUser(data.accessToken);
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(data.accessToken);
 
     if (error || !user) {
       console.error("[auth] syncSupabaseSession validation failed:", error?.message);
