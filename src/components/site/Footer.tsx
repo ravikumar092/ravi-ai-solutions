@@ -21,6 +21,12 @@ export function Footer() {
         <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
         <div className="flex items-center gap-6">
           <a
+            href="/about"
+            className="hover:text-foreground transition"
+          >
+            About Founder
+          </a>
+          <a
             href={youtubeUrl}
             target="_blank"
             rel="noreferrer"
