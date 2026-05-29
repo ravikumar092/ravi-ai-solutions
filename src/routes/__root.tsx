@@ -1,12 +1,17 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
   createRootRouteWithContext,
   useRouter,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useServerFn } from "@/hooks/use-server-fn";
+import { syncSupabaseSession } from "@/lib/purchases.functions";
+import { toast } from "sonner";
 import { CursorGlow } from "@/components/site/CursorGlow";
 
 import appCss from "../styles.css?url";
@@ -137,6 +142,78 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const navigate = useNavigate();
+  const syncSession = useServerFn(syncSupabaseSession);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkOAuthSession() {
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.access_token && active) {
+          console.log("[root] Found active Supabase OAuth session, syncing...");
+          const result = await syncSession({ accessToken: session.access_token });
+          if (result?.success && result.sessionId) {
+            document.cookie = `replit_session=${encodeURIComponent(result.sessionId)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+
+            // Log out from Supabase client to clean local storage
+            await supabase.auth.signOut();
+
+            await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+            toast.success("Signed in successfully! 👋");
+            
+            // Redirect to dashboard if they are on home or auth screens
+            const currentPath = window.location.pathname;
+            if (currentPath === "/" || currentPath === "/signin" || currentPath === "/signup") {
+              navigate({ to: "/dashboard" });
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error("[root] OAuth sync error:", err);
+      }
+    }
+
+    checkOAuthSession();
+
+    let authListener: any;
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!active) return;
+        if (event === "SIGNED_IN" && session?.access_token) {
+          try {
+            console.log("[root] Supabase onAuthStateChange SIGNED_IN, syncing...");
+            const result = await syncSession({ accessToken: session.access_token });
+            if (result?.success && result.sessionId) {
+              document.cookie = `replit_session=${encodeURIComponent(result.sessionId)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+
+              // Sign out from Supabase client
+              await supabase.auth.signOut();
+
+              await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+              toast.success("Signed in successfully! 👋");
+              
+              const currentPath = window.location.pathname;
+              if (currentPath === "/" || currentPath === "/signin" || currentPath === "/signup") {
+                navigate({ to: "/dashboard" });
+              }
+            }
+          } catch (err: any) {
+            console.error("[root] OAuth state change sync error:", err);
+          }
+        }
+      });
+      authListener = subscription;
+    });
+
+    return () => {
+      active = false;
+      if (authListener) authListener.unsubscribe();
+    };
+  }, [syncSession, queryClient, navigate]);
 
   return (
     <QueryClientProvider client={queryClient}>
