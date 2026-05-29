@@ -351,7 +351,8 @@ export const loginPublicUser = createServerFn({ method: "POST" })
     console.log(`[auth] Logging in public user: ${data.email}`);
 
     // Sign in via Supabase Auth
-    const { data: authData, error } = await supabaseAdmin.auth.signInWithPassword({
+    const { supabase } = await import("../integrations/supabase/client");
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });

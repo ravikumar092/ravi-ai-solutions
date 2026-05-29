@@ -65,7 +65,8 @@ export async function handleFormLogin(request: Request): Promise<Response> {
     // Fallback to Supabase Auth check
     console.log('[form-auth] Local admin login failed or not configured. Attempting Supabase Auth...');
     try {
-      const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: username,
         password: password,
       });
