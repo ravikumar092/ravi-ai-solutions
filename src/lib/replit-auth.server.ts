@@ -33,29 +33,18 @@ function parseCookieValue(cookieHeader: string, name: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function addLog(msg: string) {
-  console.log(msg);
-  if (typeof globalThis !== 'undefined') {
-    if (!(globalThis as any).__server_logs) {
-      (globalThis as any).__server_logs = [];
-    }
-    (globalThis as any).__server_logs.push(`[${new Date().toISOString()}] ${msg}`);
-  }
-}
-
 export async function getSession(request: Request): Promise<ReplitSession | null> {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const sessionId = parseCookieValue(cookieHeader, 'replit_session');
-  addLog(`[replit-auth] getSession sessionId from cookie: ${sessionId ? 'exists (' + sessionId.slice(0, 10) + '...)' : 'missing'}`);
+  console.log(`[replit-auth] getSession sessionId from cookie: ${sessionId ? 'exists' : 'missing'}`);
   if (!sessionId) return null;
 
   const sess = await getLocalSession(sessionId);
-  addLog(`[replit-auth] getSession local session: ${sess ? 'found' : 'not found'}`);
+  console.log(`[replit-auth] getSession local session: ${sess ? 'found' : 'not found'}`);
   if (!sess || !sess.userId) return null;
 
   // Form-based admin sessions store isAdmin directly; OIDC users check Supabase
   const admin = sess.isAdmin === true ? true : await isAdminInSupabase(sess.userId);
-  addLog(`[replit-auth] getSession user role check admin=${admin}`);
 
   return {
     userId: sess.userId,
