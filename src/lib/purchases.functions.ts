@@ -417,6 +417,54 @@ export const loginPublicUser = createServerFn({ method: "POST" })
     return { success: true, sessionId, user: sessionData };
   });
 
+export const syncSupabaseSession = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        accessToken: z.string(),
+      })
+      .parse(d)
+  )
+  .handler(async ({ data }) => {
+    console.log(`[auth] Syncing Supabase session`);
+
+    // Validate the token with Supabase Auth
+    const { supabase } = await import("../integrations/supabase/client");
+    const { data: { user }, error } = await supabase.auth.getUser(data.accessToken);
+
+    if (error || !user) {
+      console.error("[auth] syncSupabaseSession validation failed:", error?.message);
+      throw new Error(error?.message || "Invalid or expired session token.");
+    }
+
+    // Check if they are admin
+    const { data: roleData } = await supabaseAdmin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .limit(1);
+    const isAdmin = (roleData?.length ?? 0) > 0;
+
+    const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || user.email?.split("@")[0] || "User";
+
+    // Auto-create local session
+    const { generateSessionId, saveSession } = await import("./replit-auth.server");
+    const sessionId = generateSessionId();
+    const sessionData = {
+      isAdmin,
+      email: user.email,
+      firstName: firstName,
+      lastName: null,
+      profileImageUrl: user.user_metadata?.avatar_url || null,
+    };
+
+    await saveSession(sessionId, user.id, sessionData);
+
+    console.log(`[auth] Supabase session synced successfully: ${user.email}, Session ID: ${sessionId}`);
+    return { success: true, sessionId, user: sessionData };
+  });
+
 export const getPurchaseById = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ purchaseId: z.string().min(1) }).parse(d))
   .handler(async ({ data }): Promise<any | null> => {

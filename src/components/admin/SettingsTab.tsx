@@ -205,6 +205,10 @@ export function SettingsTab() {
           <Textarea value={form.founder_bio ?? ""} onChange={set("founder_bio")} placeholder="Founder bio and credentials..." rows={3} className="bg-background" />
           <p className="text-[11px] text-muted-foreground mt-1">Detailed description of your expertise and mission.</p>
         </Field>
+        <Field label="About Page Headline">
+          <Input value={form.about_headline ?? ""} onChange={set("about_headline")} placeholder="Designing Autonomous Systems that work while you sleep." />
+          <p className="text-[11px] text-muted-foreground mt-1">Main heading displayed on the About page.</p>
+        </Field>
         <Field label="Public contact email">
           <Input type="email" value={form.contact_email ?? ""} onChange={set("contact_email")} placeholder="hello@yourdomain.com" />
         </Field>

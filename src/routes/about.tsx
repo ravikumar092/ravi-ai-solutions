@@ -49,6 +49,7 @@ function AboutPage() {
   const founderName = settings?.founder_name || "Ravi Kumar";
   const founderBio = settings?.founder_bio || "13+ years of full-stack engineering across startups and digital enterprise models. Today, I build and document autonomous systems to help creators, freelancers, and builders work smarter and unlock solo business scale.";
   const siteName = settings?.site_name || "Ravi Kumar AI Lab";
+  const aboutHeadline = settings?.about_headline || "Designing Autonomous Systems that work while you sleep.";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -64,7 +65,7 @@ function AboutPage() {
             </div>
             
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-              Designing <span className="neon-text">Autonomous Systems</span> that work while you sleep.
+              {aboutHeadline}
             </h1>
             
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed font-light">

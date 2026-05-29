@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useServerFn } from "@/hooks/use-server-fn";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LogIn, Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react";
-import { loginPublicUser } from "@/lib/purchases.functions";
+import { loginPublicUser, syncSupabaseSession } from "@/lib/purchases.functions";
 
 export const Route = createFileRoute("/signin")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -29,6 +29,7 @@ function SigninPage() {
   const search = useSearch({ from: "/signin" });
   const redirectTo = (search as any).redirect || "/dashboard";
   const loginUser = useServerFn(loginPublicUser);
+  const syncSession = useServerFn(syncSupabaseSession);
   const qc = useQueryClient();
 
   const [email, setEmail] = useState("");
@@ -36,6 +37,90 @@ function SigninPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    
+    async function checkOAuthSession() {
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.access_token && active) {
+          setLoading(true);
+          console.log("[signin] Found active Supabase OAuth session, syncing...");
+          const result = await syncSession({ accessToken: session.access_token });
+          if (result?.success && result.sessionId) {
+            document.cookie = `replit_session=${encodeURIComponent(result.sessionId)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+            
+            // Log out from Supabase client to clean local storage
+            await supabase.auth.signOut();
+            
+            await qc.invalidateQueries({ queryKey: ["current-user"] });
+            toast.success("Welcome back! 👋");
+            navigate({ to: redirectTo });
+          }
+        }
+      } catch (err: any) {
+        console.error("[signin] OAuth sync error:", err);
+        toast.error(err.message || "Failed to sync Google session.");
+        setLoading(false);
+      }
+    }
+
+    checkOAuthSession();
+
+    let authListener: any;
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!active) return;
+        if (event === "SIGNED_IN" && session?.access_token) {
+          setLoading(true);
+          try {
+            console.log("[signin] Supabase onAuthStateChange SIGNED_IN, syncing...");
+            const result = await syncSession({ accessToken: session.access_token });
+            if (result?.success && result.sessionId) {
+              document.cookie = `replit_session=${encodeURIComponent(result.sessionId)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+              
+              // Sign out from Supabase client
+              await supabase.auth.signOut();
+              
+              await qc.invalidateQueries({ queryKey: ["current-user"] });
+              toast.success("Welcome back! 👋");
+              navigate({ to: redirectTo });
+            }
+          } catch (err: any) {
+            console.error("[signin] OAuth state change sync error:", err);
+            toast.error(err.message || "Failed to sync Google session.");
+            setLoading(false);
+          }
+        }
+      });
+      authListener = subscription;
+    });
+
+    return () => {
+      active = false;
+      if (authListener) authListener.unsubscribe();
+    };
+  }, [syncSession, redirectTo, navigate, qc]);
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/signin?redirect=" + encodeURIComponent(redirectTo),
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate Google sign-in.");
+      setLoading(false);
+    }
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -137,6 +222,43 @@ function SigninPage() {
                 )}
               </Button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outlineNeon"
+              className="w-full h-11 gap-3 text-sm font-semibold hover:border-primary/45"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  fill="#EA4335"
+                  d="M12 5.04c1.62 0 3.08.56 4.22 1.65l3.15-3.15C17.45 1.76 14.93 1 12 1 7.42 1 3.52 3.63 1.67 7.43l3.85 2.99C6.44 7.48 9 5.04 12 5.04z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.47h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.67 2.84c2.14-1.97 3.74-4.87 3.74-8.5z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.52 14.58c-.24-.71-.38-1.47-.38-2.26s.14-1.55.38-2.26L1.67 7.07C.86 8.7.4 10.53.4 12.5s.46 3.8.1.27l3.85-2.99z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.67-2.84c-1.02.68-2.33 1.09-3.99 1.09-3.15 0-5.81-2.13-6.76-5.01L1.67 16.32C3.52 20.12 7.42 23 12 23z"
+                />
+              </svg>
+              Google
+            </Button>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
